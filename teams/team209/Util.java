@@ -1,0 +1,105 @@
+package team209;
+
+import java.util.HashMap;
+import java.util.Random;
+
+import battlecode.common.Direction;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
+import team209.Graph.Edge;
+
+public class Util {
+
+	public static final boolean USE_LOGGING = false;
+	public static Random RAND;
+	public static final Direction[] VALID_DIRECTIONS = new Direction[] {
+			Direction.NORTH, // 0,-1
+			Direction.NORTH_EAST, // 1,-1
+			Direction.EAST,// 1,0
+			Direction.SOUTH_EAST,// 1,1
+			Direction.SOUTH, // 0,1
+			Direction.SOUTH_WEST,// -1,1
+			Direction.WEST,// -1,0
+			Direction.NORTH_WEST // -1,-1
+	};
+
+	public static void printMap(int[][] map) {
+		if (USE_LOGGING) {
+			System.out.println("###########MAP############");
+			System.out.print("\n");
+			for (int j = 0; j < map[0].length; j++) {
+				for (int i = 0; i < map.length; i++)
+					System.out.print(valToSymbol(map[i][j]) + " ");
+				System.out.print("\n");
+			}
+		}
+	}
+
+	public static Character valToSymbol(int val) {
+		char symbol = ' ';
+		if (val >= 0)
+			symbol = (char) ((val % 80) + 33);
+		else
+			switch (val) {
+			case -1:
+				symbol = ' ';
+				break;
+			case -2:
+				symbol = '-';
+				break;
+			case -3:
+				symbol = 'x';
+				break;
+			}
+		return symbol;
+	}
+
+	public static void print(int[] rec) {
+		if (USE_LOGGING) {
+			for (int j = 0; j < rec.length; j++)
+				System.out.print(rec[j] + ", ");
+			System.out.print("\n");
+		}
+	}
+
+	public static void printEdges(HashMap<Integer, HashMap<Integer, Edge>> edges) {
+		if (USE_LOGGING) {
+			int edgesNum = 0;
+			for (Integer from : edges.keySet()) {
+				for (Integer to : edges.get(from).keySet()) {
+					edgesNum++;
+					System.out.println("Edge from: " + valToSymbol(from)
+							+ ", to: " + valToSymbol(to));
+				}
+			}
+			System.out.println("Edges num: " + edgesNum);
+		}
+	}
+
+	public static void init(RobotController rc) {
+		RAND = new Random(rc.getRobot().getID());
+	}
+
+	public static int distance(int i, int j, int x, int y) {
+		return Math.max(Math.abs(i - x), Math.abs(j - y));
+	}
+
+	public static MapLocation closest(MapLocation loc, MapLocation[] others) {
+		if (others.length == 0)
+			return null;
+		int min = 100 * 100;
+		MapLocation closest = null;
+		for (int i = 0; i < Math.min(5, others.length); i++) {
+			int dist = distance(loc, others[i]);
+			if (dist < min) {
+				min = dist;
+				closest = others[i];
+			}
+		}
+		return closest;
+	}
+
+	private static int distance(MapLocation l1, MapLocation l2) {
+		return distance(l1.x, l1.y, l2.x, l2.y);
+	}
+}
