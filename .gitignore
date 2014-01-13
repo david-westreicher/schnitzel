@@ -1,0 +1,13 @@
+art/*
+bin/*
+doc/*
+lib/*
+music/*
+sound/*
+replays/*
+Uninstaller/*
+/*.txt
+*.xml
+*.conf
+*~
+.installationinformation
