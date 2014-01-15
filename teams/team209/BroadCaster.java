@@ -11,6 +11,9 @@ import battlecode.common.RobotController;
 public class BroadCaster {
 	public static final int GRAPH_BROADCAST_START = 10;
 	public static final boolean SEND_EDGES_TOO = false;
+	public static final int NOISEPOS_CHANNEL = 200;
+	public static final int SWARMPOS_CHANNEL = 100;
+	public static final int TYPE_CHANNEL = 0;
 
 	public static void broadCast(RobotController rc, Graph graph)
 			throws GameActionException {
@@ -95,6 +98,10 @@ public class BroadCaster {
 	public static void broadCast(RobotController rc, int i, int loc1, int loc2)
 			throws GameActionException {
 		rc.broadcast(i, toInt2(loc1, loc2));
+	}
+
+	public static void broadCast(RobotController rc, int ordinal) {
+
 	}
 
 }

@@ -5,53 +5,28 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
 public class RobotPlayer {
-	public static Player hq;
-	public static Player sp;
-	public static RobotController RC;
+	private static Player p;
 
 	public static void run(RobotController rc) {
 		Util.init(rc);
-		RC = rc;
-		if (rc.getType() == RobotType.HQ) {
-			try {
-				hq = new HQPlayer(rc);
-				runHQ();
-			} catch (GameActionException e) {
-				e.printStackTrace();
+		try {
+			if (rc.getType() == RobotType.HQ) {
+				p = new HQPlayer3(rc);
+			} else if (rc.getType() == RobotType.SOLDIER) {
+				p = new SoldierPlayer3(rc);
+			} else if (rc.getType() == RobotType.NOISETOWER) {
+				p = new NoiseTower(rc);
 			}
-		} else if (rc.getType() == RobotType.SOLDIER) {
-			try {
-				sp = new SoldierPlayer(rc);
-				runSoldier();
-			} catch (GameActionException e) {
-				e.printStackTrace();
-			}
-		} else {
-			while (true) {
-				rc.yield();
-			}
-		}
-	}
-
-	private static void runSoldier() {
-		while (true) {
-			try {
-				sp.run();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			RC.yield();
-		}
-	}
-
-	private static void runHQ() {
-		while (true) {
-			try {
-				hq.run();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			RC.yield();
+			if (p != null)
+				while (true) {
+					p.run();
+					rc.yield();
+				}
+			else
+				while (true)
+					rc.yield();
+		} catch (GameActionException e) {
+			e.printStackTrace();
 		}
 	}
 }

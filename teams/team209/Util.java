@@ -10,7 +10,7 @@ import team209.Graph.Edge;
 
 public class Util {
 
-	public static final boolean USE_LOGGING = false;
+	public static final boolean USE_LOGGING = true;
 	public static Random RAND;
 	public static final Direction[] VALID_DIRECTIONS = new Direction[] {
 			Direction.NORTH, // 0,-1
@@ -101,5 +101,30 @@ public class Util {
 
 	private static int distance(MapLocation l1, MapLocation l2) {
 		return distance(l1.x, l1.y, l2.x, l2.y);
+	}
+
+	public static int[] add(int[] loc1, int[] loc2, int i) {
+		loc1[0] += loc2[0] * i;
+		loc1[1] += loc2[1] * i;
+		return loc1;
+	}
+
+	public static int[] divide(int[] add, int i) {
+		add[0] /= i;
+		add[1] /= i;
+		return add;
+	}
+
+	public static void printMap(double[][] map) {
+
+		if (USE_LOGGING) {
+			System.out.println("###########MAP############");
+			System.out.print("\n");
+			for (int j = 0; j < map[0].length; j++) {
+				for (int i = 0; i < map.length; i++)
+					System.out.print(valToSymbol((int) map[i][j]) + " ");
+				System.out.print("\n");
+			}
+		}
 	}
 }
