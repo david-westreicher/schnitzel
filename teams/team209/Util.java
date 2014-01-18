@@ -3,6 +3,7 @@ package team209;
 import java.util.HashMap;
 import java.util.Random;
 
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
@@ -12,6 +13,8 @@ public class Util {
 
 	public static final boolean USE_LOGGING = true;
 	public static Random RAND;
+	private static int start;
+	private static int startRound;
 	public static final Direction[] VALID_DIRECTIONS = new Direction[] {
 			Direction.NORTH, // 0,-1
 			Direction.NORTH_EAST, // 1,-1
@@ -124,6 +127,25 @@ public class Util {
 				for (int i = 0; i < map.length; i++)
 					System.out.print(valToSymbol((int) map[i][j]) + " ");
 				System.out.print("\n");
+			}
+		}
+	}
+
+	public static void tick() {
+		start = Clock.getBytecodeNum();
+		startRound = Clock.getRoundNum();
+	}
+
+	public static void tock(String string) {
+		System.out.println(string
+				+ "= "
+				+ ((Clock.getRoundNum() - startRound) * 10000 + (Clock
+						.getBytecodeNum() - start)) + " bc");
+	}
+
+	public static void printEdges(int[][] edges, int numberOfRecs) {
+		for (int i = 0; i < numberOfRecs; i++) {
+			for (int j = 1; j <= edges[i][0]; j++) {
 			}
 		}
 	}

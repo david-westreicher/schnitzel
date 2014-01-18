@@ -7,7 +7,7 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class Shooting {
-	public static RobotInfo nearbyRobots[] = new RobotInfo[10];
+	public static RobotInfo nearbyRobots[] = new RobotInfo[3];
 
 	public static boolean tryToShoot(RobotController rc)
 			throws GameActionException {
@@ -22,7 +22,7 @@ public class Shooting {
 				nearbyRobots[index++] = ri;
 			}
 		}
-		if (index > 0)
+		if (index == 0)
 			return false;
 		double minHealth = 100000;
 		RobotInfo minHealthBot = null;

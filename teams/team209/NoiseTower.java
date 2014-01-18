@@ -10,8 +10,7 @@ import battlecode.common.TerrainTile;
 
 public class NoiseTower extends Player {
 
-	private static final int DIST_PLUS = (int) (Math
-			.sqrt(GameConstants.NOISE_SCARE_RANGE_LARGE) / 3.5);
+	private static final int DIST_PLUS = 1;
 	private RobotController rc;
 	private int[] distances;
 	private MapLocation loc;
@@ -33,8 +32,8 @@ public class NoiseTower extends Player {
 			int yMove = (int) (((i % 2) - 0.5f) * 2);
 			int posX = loc.x;
 			int posY = loc.y;
-			int dist = 0;
-			for (int j = 0; j <= noiseReach; j++) {
+			int dist = 1;
+			for (int j = 0; j < noiseReach; j++) {
 				posX += xMove;
 				posY += yMove;
 				TerrainTile tile = rc.senseTerrainTile(new MapLocation(posX,

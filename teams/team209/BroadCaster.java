@@ -2,10 +2,12 @@ package team209;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import team209.Graph.Edge;
 import team209.Graph.Node;
 import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 public class BroadCaster {
@@ -14,6 +16,7 @@ public class BroadCaster {
 	public static final int NOISEPOS_CHANNEL = 200;
 	public static final int SWARMPOS_CHANNEL = 100;
 	public static final int TYPE_CHANNEL = 0;
+	private static final int PATH_CHANNEL = 300;
 
 	public static void broadCast(RobotController rc, Graph graph)
 			throws GameActionException {
@@ -100,8 +103,23 @@ public class BroadCaster {
 		rc.broadcast(i, toInt2(loc1, loc2));
 	}
 
-	public static void broadCast(RobotController rc, int ordinal) {
-
+	public static void broadCast(RobotController rc, MapLocation[] path)
+			throws GameActionException {
+		int channel = PATH_CHANNEL + 1;
+		for (MapLocation ml : path) {
+			rc.broadcast(channel++, toInt2(ml.x, ml.y));
+		}
+		rc.broadcast(PATH_CHANNEL, path.length);
 	}
 
+	public static MapLocation[] readPath(RobotController rc)
+			throws GameActionException {
+		int pathlength = rc.readBroadcast(PATH_CHANNEL);
+		MapLocation[] ml = new MapLocation[pathlength];
+		for (int i = 0; i < pathlength; i++) {
+			int[] xy = fromInt2(rc.readBroadcast(PATH_CHANNEL + 1 + i));
+			ml[i] = new MapLocation(xy[0], xy[1]);
+		}
+		return ml;
+	}
 }

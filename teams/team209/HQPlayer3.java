@@ -27,6 +27,7 @@ public class HQPlayer3 extends Player {
 			RobotType.SOLDIER, RobotType.SOLDIER, RobotType.SOLDIER,
 			RobotType.SOLDIER };
 	private int currentType = 0;
+	private ArrayList<double[]> possNoisePos;
 
 	public HQPlayer3(RobotController rc) throws GameActionException {
 		this.rc = rc;
@@ -63,7 +64,7 @@ public class HQPlayer3 extends Player {
 			for (int j = 0; j < height; j++)
 				if (map[i][j] == 2)
 					cowGrowth[i][j] = -1;
-		ArrayList<double[]> possNoisePos = new ArrayList<double[]>();
+		possNoisePos = new ArrayList<double[]>();
 		int maxDist = (int) Math.max(width / 2.2, height / 2.2);
 		for (int i = noiseReach / 2; i < width; i += noiseReach / 2) {
 			for (int j = noiseReach / 2; j < height; j += noiseReach / 2) {
@@ -139,7 +140,11 @@ public class HQPlayer3 extends Player {
 					BroadCaster.broadCast(rc, BroadCaster.SWARMPOS_CHANNEL,
 							closestPastr.x, closestPastr.y);
 				else {
-
+					if (possNoisePos.size() > 0) {
+						double[] pastrLoc = possNoisePos.get(0);
+						BroadCaster.broadCast(rc, BroadCaster.SWARMPOS_CHANNEL,
+								(int) pastrLoc[0], (int) pastrLoc[1]);
+					}
 				}
 			}
 			tryToSpawn();
