@@ -6,17 +6,24 @@ import java.util.List;
 
 import team209.Graph.Edge;
 import team209.Graph.Node;
+import team209.HQPlayer4.Action;
+import team209.OptimizedPathing.PathType;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 public class BroadCaster {
+
 	public static final int GRAPH_BROADCAST_START = 10;
 	public static final boolean SEND_EDGES_TOO = false;
 	public static final int NOISEPOS_CHANNEL = 200;
 	public static final int SWARMPOS_CHANNEL = 100;
+	public static final int HQ_STARTROUND_CHANNEL = 0;
 	public static final int TYPE_CHANNEL = 0;
-	private static final int PATH_CHANNEL = 300;
+	public static final int CURRENT_FREQUENCY_BAND = 1;
+	private static final int PATH_CHANNEL_START = 2;
+	private static final int FREQUENCY_BAND_SIZE = 30001;
+	public static final int MEETING_CONSTRUCTED = 65321;
 
 	public static void broadCast(RobotController rc, Graph graph)
 			throws GameActionException {
@@ -103,23 +110,52 @@ public class BroadCaster {
 		rc.broadcast(i, toInt2(loc1, loc2));
 	}
 
-	public static void broadCast(RobotController rc, MapLocation[] path)
-			throws GameActionException {
-		int channel = PATH_CHANNEL + 1;
+	public static void broadCast(RobotController rc, MapLocation[] path,
+			int frequencyband, PathType pt) throws GameActionException {
+		// 0: action
+		// 1: hqlength
+		// 2 - 10000: hq -> meetpoint
+		// 10001: lastlength
+		// 10002 - 20000: last_meetpoint -> new_meetpoint
+		// 20001: attacklength
+		// 20002 - 30000: meetpoint -> attack
+		int startChannel = PATH_CHANNEL_START + (frequencyband % 2)
+				* FREQUENCY_BAND_SIZE + pt.ordinal() * 10000 + 1;
+		int channel = startChannel + 1;
 		for (MapLocation ml : path) {
 			rc.broadcast(channel++, toInt2(ml.x, ml.y));
 		}
-		rc.broadcast(PATH_CHANNEL, path.length);
+		rc.broadcast(startChannel, path.length);
 	}
 
-	public static MapLocation[] readPath(RobotController rc)
-			throws GameActionException {
-		int pathlength = rc.readBroadcast(PATH_CHANNEL);
+	public static MapLocation[] readPath(RobotController rc, int frequency,
+			PathType pt) throws GameActionException {
+		int startChannel = PATH_CHANNEL_START + (frequency % 2)
+				* FREQUENCY_BAND_SIZE + pt.ordinal() * 10000 + 1;
+		int pathlength = rc.readBroadcast(startChannel);
+		if (pathlength == 0)
+			return null;
 		MapLocation[] ml = new MapLocation[pathlength];
 		for (int i = 0; i < pathlength; i++) {
-			int[] xy = fromInt2(rc.readBroadcast(PATH_CHANNEL + 1 + i));
+			int[] xy = fromInt2(rc.readBroadcast(startChannel + 1 + i));
 			ml[i] = new MapLocation(xy[0], xy[1]);
 		}
 		return ml;
+	}
+
+	public static void broadCastAction(RobotController rc, int frequency,
+			Action a) throws GameActionException {
+		// System.out.println("broadCastAction " + frequency + ": " + a);
+		rc.broadcast(
+				(frequency % 2) * FREQUENCY_BAND_SIZE + PATH_CHANNEL_START,
+				a.ordinal());
+	}
+
+	public static Action readAction(RobotController rc, int frequency)
+			throws GameActionException {
+		Action a = Action.values()[rc.readBroadcast((frequency % 2)
+				* FREQUENCY_BAND_SIZE + PATH_CHANNEL_START)];
+		// System.out.println("readAction " + frequency + ": " + a);
+		return a;
 	}
 }

@@ -5,6 +5,11 @@ import java.util.LinkedList;
 import battlecode.common.MapLocation;
 
 public class OptimizedPathing {
+	public static enum PathType {
+		HQ_TO_MEETING, MEETING_TO_ATTACK, TO_NEXT_MEETING
+
+	}
+
 	private static class MetaNode {
 		private int id;
 		private int pathLength = 0;

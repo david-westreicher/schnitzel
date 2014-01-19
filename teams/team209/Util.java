@@ -90,6 +90,8 @@ public class Util {
 	public static MapLocation closest(MapLocation loc, MapLocation[] others) {
 		if (others.length == 0)
 			return null;
+		if (others.length == 1)
+			return others[0];
 		int min = 100 * 100;
 		MapLocation closest = null;
 		for (int i = 0; i < Math.min(5, others.length); i++) {
@@ -137,10 +139,11 @@ public class Util {
 	}
 
 	public static void tock(String string) {
-		System.out.println(string
-				+ "= "
-				+ ((Clock.getRoundNum() - startRound) * 10000 + (Clock
-						.getBytecodeNum() - start)) + " bc");
+		if (USE_LOGGING)
+			System.out.println(string
+					+ "= "
+					+ ((Clock.getRoundNum() - startRound) * 10000 + (Clock
+							.getBytecodeNum() - start)) + " bc");
 	}
 
 	public static void printEdges(int[][] edges, int numberOfRecs) {
