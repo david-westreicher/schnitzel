@@ -16,7 +16,7 @@ public class Analyser {
 	private static int[][] map;
 	private static double[][] cowGrowth;
 	private static int NOISE_REACH = (int) (Math
-			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5);
+			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5) + 1;
 	private static PriorityQueue<double[]> possNoisePos;
 	private static double priorityqueue[][];
 	private static int height;

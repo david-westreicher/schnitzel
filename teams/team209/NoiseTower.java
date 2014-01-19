@@ -17,7 +17,7 @@ public class NoiseTower extends Player {
 	private int height;
 	private int width;
 	private int noiseReach = (int) (Math
-			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5);
+			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5) + 1;
 	private int currentDiag = 0;
 	private int currentDist = 0;
 
