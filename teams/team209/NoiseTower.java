@@ -50,12 +50,13 @@ public class NoiseTower extends Player {
 		MapLocation attack = new MapLocation(loc.x + xMove
 				* (distances[i] - currentDist), loc.y + yMove
 				* (distances[i] - currentDist));
-		currentDist += DIST_PLUS;
-		if (distances[i] - currentDist <= 1) {
-			currentDiag = (currentDiag + 1) % 8;
-			currentDist = 0;
-		}
-		if (rc.isActive())
+		if (rc.isActive()) {
 			rc.attackSquare(attack);
+			currentDist += DIST_PLUS;
+			if (distances[i] - currentDist <= 1) {
+				currentDiag = (currentDiag + 1) % 8;
+				currentDist = 0;
+			}
+		}
 	}
 }

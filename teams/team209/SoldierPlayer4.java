@@ -15,15 +15,14 @@ public class SoldierPlayer4 extends Player {
 	private MapLocation nextLoc;
 	private int currentLocIndex;
 	private MapLocation loc;
-	private MapLocation hq;
 	private int minDistance = 2;
 	private int frequency;
 	private RobotType constructionType = null;
+	private boolean attack;
 
 	public SoldierPlayer4(RobotController rc) throws GameActionException {
 		this.rc = rc;
 		frequency = this.rc.readBroadcast(BroadCaster.CURRENT_FREQUENCY_BAND);
-		hq = rc.senseHQLocation();
 		path = BroadCaster.readPath(rc, frequency, PathType.HQ_TO_MEETING);
 		if (path != null && path.length > 0) {
 			getNextLoc();
@@ -35,8 +34,8 @@ public class SoldierPlayer4 extends Player {
 			return;
 		nextLoc = path[currentLocIndex];
 		currentLocIndex++;
-		rc.setIndicatorString(2, "currentLocIndex: " + currentLocIndex + "/"
-				+ path.length);
+		// rc.setIndicatorString(2, "currentLocIndex: " + currentLocIndex + "/"
+		// + path.length);
 		// currentLocIndex = Math.min(path.length - 1,
 		// Math.max(0, currentLocIndex));
 		// if (goBack && currentLocIndex == 0) {
@@ -63,12 +62,19 @@ public class SoldierPlayer4 extends Player {
 		}
 		loc = rc.getLocation();
 		Action a = BroadCaster.readAction(rc, frequency);
+		// rc.setIndicatorString(0, "" + a);
 		if (a == Action.NEW_MEETING) {
 			MapLocation[] newpath = BroadCaster.readPath(rc, frequency,
 					PathType.TO_NEXT_MEETING);
-			path = mergePaths(path, newpath);
+			path = Util.mergePaths(path, newpath);
+			attack = false;
 			frequency++;
-			// currentLocIndex = 0;
+		}
+		if (!attack && a == Action.ATTACK) {
+			MapLocation[] newpath = BroadCaster.readPath(rc, frequency,
+					PathType.MEETING_TO_ATTACK);
+			path = Util.mergePaths(path, newpath);
+			attack = true;
 		}
 		if (!Shooting.tryToShoot(rc)) {
 			if (nextLoc != null) {
@@ -77,8 +83,8 @@ public class SoldierPlayer4 extends Player {
 					if (currentLocIndex == path.length) {
 						int constructionLevel = rc
 								.readBroadcast(BroadCaster.MEETING_CONSTRUCTED);
-						rc.setIndicatorString(0, "MEETING_CONSTRUCTED: "
-								+ constructionLevel);
+						// rc.setIndicatorString(0, "MEETING_CONSTRUCTED: "
+						// + constructionLevel);
 						if (dist == 0) {
 							rc.broadcast(BroadCaster.MEETING_CONSTRUCTED, 1);
 							construct(RobotType.NOISETOWER);
@@ -96,18 +102,9 @@ public class SoldierPlayer4 extends Player {
 		}
 	}
 
-	private MapLocation[] mergePaths(MapLocation[] p1, MapLocation[] p2) {
-		MapLocation newpath[] = new MapLocation[p1.length + p2.length];
-		for (int i = 0; i < p1.length + p2.length; i++) {
-			newpath[i] = (i < p1.length) ? p1[i] : p2[i - p1.length];
-		}
-		return newpath;
-
-	}
-
 	private boolean dynamicMove(MapLocation loc, MapLocation target,
 			boolean sneak) throws GameActionException {
-		rc.setIndicatorString(1, "pathing to: " + target);
+		// rc.setIndicatorString(1, "pathing to: " + target);
 		int diffX = -(int) Math.signum(loc.x - target.x);
 		int diffY = -(int) Math.signum(loc.y - target.y);
 		int bestDir = -1;

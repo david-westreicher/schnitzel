@@ -134,7 +134,7 @@ public class BroadCaster {
 				* FREQUENCY_BAND_SIZE + pt.ordinal() * 10000 + 1;
 		int pathlength = rc.readBroadcast(startChannel);
 		if (pathlength == 0)
-			return null;
+			return new MapLocation[0];
 		MapLocation[] ml = new MapLocation[pathlength];
 		for (int i = 0; i < pathlength; i++) {
 			int[] xy = fromInt2(rc.readBroadcast(startChannel + 1 + i));

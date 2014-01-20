@@ -13,26 +13,28 @@ import battlecode.common.RobotType;
 
 public class Analyser {
 	private static final int MAX_PASTR_LOCS = 5;
-	private static int[][] map;
 	private static double[][] cowGrowth;
 	private static int NOISE_REACH = (int) (Math
 			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5) + 1;
-	private static PriorityQueue<double[]> possNoisePos;
 	private static double priorityqueue[][];
 	private static int height;
 	private static int width;
 	static int[][] moves = new int[][] { new int[] { 1, 1 },
-			new int[] { 1, -1 }, new int[] { -1, 1 }, new int[] { -1, -1 },
-			new int[] { 1, 0 }, new int[] { -1, 0 }, new int[] { 0, 1 },
-			new int[] { 0, -1 } };
+			new int[] { 1, 0 }, new int[] { 1, -1 }, new int[] { 0, -1 },
+			new int[] { -1, -1 }, new int[] { -1, 0 }, new int[] { -1, 1 },
+			new int[] { 0, 1 } };
+	private static MapLocation hqLoc;
+	private static float[] midNormal;
+	private static float[] mid;
 
 	public static double[][] findBestNoisePos(RobotController rc, int[][] map,
 			MapLocation hqloc) throws GameActionException {
 		Analyser.width = map.length;
 		Analyser.height = map[0].length;
 		priorityqueue = new double[MAX_PASTR_LOCS][3];
-		Analyser.map = map;
+		Analyser.hqLoc = hqloc;
 		cowGrowth = rc.senseCowGrowth();
+		calculateMidNormal();
 		// remove voids (walls) from cowgrowth
 		for (int i = 0; i < width; i++)
 			for (int j = 0; j < height; j++)
@@ -44,10 +46,10 @@ public class Analyser {
 		Util.tick();
 		// int maxDist = (int) (Math.max(width, height) / 2.2);
 		int noiseReachHalf = NOISE_REACH / 2;
-		for (int i = noiseReachHalf; i < width; i += noiseReachHalf) {
-			for (int j = noiseReachHalf; j < height; j += noiseReachHalf) {
-				// if (Util.distance(i, j, hqloc.x, hqloc.y) >= maxDist)
-				// continue;
+		for (int i = 0; i < width; i += noiseReachHalf) {
+			for (int j = 0; j < height; j += noiseReachHalf) {
+				if (insideOtherHalf(i, j))
+					continue;
 				// cowGrowth[i][j] = -3;
 				double newScore = analyse(i, j);
 				if (newScore > priorityqueue[MAX_PASTR_LOCS - 1][2])
@@ -58,9 +60,27 @@ public class Analyser {
 		/* Collections.sort(possNoisePos, ); */
 		Util.tock("possNoisePos sort");
 
-		return priorityqueue;
-		// Util.printMap(cowGrowth);
+		Util.printMap(cowGrowth);
 		// System.out.println("analyzed map");
+		return priorityqueue;
+	}
+
+	private static void calculateMidNormal() {
+		mid = new float[] { width / 2, height / 2 };
+		float normal[] = new float[] { hqLoc.x - mid[0], hqLoc.y - mid[1] };
+		// System.out.println(mid[0] + ", " + mid[1]);
+		// System.out.println(normal[0] + ", " + normal[1]);
+		// flip normal by 90 degrees
+		// float tmp = normal[0];
+		// normal[0] = normal[1];
+		// normal[1] = -tmp;
+		Analyser.midNormal = normal;
+	}
+
+	private static boolean insideOtherHalf(int i, int j) {
+		float dot = ((mid[0] - i) * midNormal[0])
+				+ ((mid[1] - j) * midNormal[1]);
+		return dot > 0;
 	}
 
 	private static void insert(double[] newLoc) {

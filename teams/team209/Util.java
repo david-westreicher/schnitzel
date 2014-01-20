@@ -11,7 +11,7 @@ import team209.Graph.Edge;
 
 public class Util {
 
-	public static final boolean USE_LOGGING = true;
+	public static final boolean USE_LOGGING = false;
 	public static Random RAND;
 	private static int start;
 	private static int startRound;
@@ -152,4 +152,14 @@ public class Util {
 			}
 		}
 	}
+
+	public static MapLocation[] mergePaths(MapLocation[] p1, MapLocation[] p2) {
+		MapLocation newpath[] = new MapLocation[p1.length + p2.length];
+		for (int i = 0; i < p1.length + p2.length; i++) {
+			newpath[i] = (i < p1.length) ? p1[i] : p2[i - p1.length];
+		}
+		return newpath;
+
+	}
+
 }

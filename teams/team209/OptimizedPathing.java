@@ -43,8 +43,13 @@ public class OptimizedPathing {
 	}
 
 	public MapLocation[] path(MapLocation start, MapLocation target) {
-		MetaNode startNode = allNodes[getNode(start)];
-		MetaNode targetNode = allNodes[getNode(target)];
+		int startNodeID = getNode(start);
+		int targetNodeID = getNode(target);
+		if (startNodeID == -1 || targetNodeID == -1) {
+			return new MapLocation[0];
+		}
+		MetaNode startNode = allNodes[startNodeID];
+		MetaNode targetNode = allNodes[targetNodeID];
 		LinkedList<MetaNode> queue = new LinkedList<MetaNode>();
 		startNode.position[0] = start.x;
 		startNode.position[1] = start.y;
