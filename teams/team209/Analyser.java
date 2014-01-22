@@ -13,6 +13,10 @@ import battlecode.common.RobotType;
 
 public class Analyser {
 	private static final int MAX_PASTR_LOCS = 5;
+	// the number of samples skipped per horizontal or lateral line
+	// most accurate score (SAMPLE_RATE = 1), worse accuracy but faster
+	// (SAMPLE_RATE>1)
+	private static final int SAMPLE_RATE = 3;
 	private static double[][] cowGrowth;
 	private static int NOISE_REACH = (int) (Math
 			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5) + 1;
@@ -26,6 +30,7 @@ public class Analyser {
 	private static MapLocation hqLoc;
 	private static float[] midNormal;
 	private static float[] mid;
+	private static float amp[] = new float[2];
 
 	public static double[][] findBestNoisePos(RobotController rc, int[][] map,
 			MapLocation hqloc) throws GameActionException {
@@ -41,26 +46,27 @@ public class Analyser {
 				if (map[i][j] == -1)
 					cowGrowth[i][j] = -1;
 
-		// TODO
-		// remove noisetowers further away from hq than enemyhq
+		// possNoisePos sort= 182078 bc
 		Util.tick();
 		// int maxDist = (int) (Math.max(width, height) / 2.2);
 		int noiseReachHalf = NOISE_REACH / 2;
 		for (int i = 0; i < width; i += noiseReachHalf) {
 			for (int j = 0; j < height; j += noiseReachHalf) {
-				if (insideOtherHalf(i, j))
+				if (cowGrowth[i][j] < 0)
 					continue;
+				float dist = distanceToMidLine(i, j);
+				if (dist <= 0)
+					continue;
+				// System.out.println(i + "," + j + ": " + dist);
 				// cowGrowth[i][j] = -3;
-				double newScore = analyse(i, j);
+				double newScore = analyse(i, j) * dist;
 				if (newScore > priorityqueue[MAX_PASTR_LOCS - 1][2])
 					insert(new double[] { i, j, newScore });
-				// possNoisePos.add();
 			}
 		}
-		/* Collections.sort(possNoisePos, ); */
 		Util.tock("possNoisePos sort");
 
-		Util.printMap(cowGrowth);
+		// Util.printMap(cowGrowth);
 		// System.out.println("analyzed map");
 		return priorityqueue;
 	}
@@ -68,6 +74,11 @@ public class Analyser {
 	private static void calculateMidNormal() {
 		mid = new float[] { width / 2, height / 2 };
 		float normal[] = new float[] { hqLoc.x - mid[0], hqLoc.y - mid[1] };
+		float length = (float) Math.sqrt(normal[0] * normal[0] + normal[1]
+				* normal[1]);
+		// TODO what happens if hq at midpoint
+		normal[0] /= length;
+		normal[1] /= length;
 		// System.out.println(mid[0] + ", " + mid[1]);
 		// System.out.println(normal[0] + ", " + normal[1]);
 		// flip normal by 90 degrees
@@ -77,16 +88,14 @@ public class Analyser {
 		Analyser.midNormal = normal;
 	}
 
-	private static boolean insideOtherHalf(int i, int j) {
-		float dot = ((mid[0] - i) * midNormal[0])
-				+ ((mid[1] - j) * midNormal[1]);
-		return dot > 0;
+	// check
+	// http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Vector_formulation
+	private static float distanceToMidLine(int i, int j) {
+		float dot = (mid[0] - i) * midNormal[0] + (mid[1] - j) * midNormal[1];
+		return -dot;
 	}
 
 	private static void insert(double[] newLoc) {
-		// printPriorityQueue();
-		// System.out.print("inserting: " + newLoc[0] + ", " + newLoc[1] + ", "
-		// + newLoc[2] + "\n");
 		double lastLoc[] = null;
 		for (int i = 0; i < MAX_PASTR_LOCS; i++) {
 			double[] loc = priorityqueue[i];
@@ -94,11 +103,6 @@ public class Analyser {
 				double[] tmp = priorityqueue[i];
 				priorityqueue[i] = lastLoc;
 				lastLoc = tmp;
-				// System.out.print("tmp: " + tmp[0] + ", " + tmp[1] + ", "
-				// + tmp[2] + "\n");
-				// System.out.print("priorityqueue[i]: " + priorityqueue[i][0]
-				// + ", " + priorityqueue[i][1] + ", "
-				// + priorityqueue[i][2] + "\n");
 			} else if (loc[2] < newLoc[2]) {
 				lastLoc = loc;
 				priorityqueue[i] = newLoc;
@@ -131,11 +135,13 @@ public class Analyser {
 		//
 		// System.out.println("analyse " + x + ", " + y);
 		for (int i = 0; i < 8; i++) {
-			int xMove = moves[i][0];// (int) (((i / 2) - 0.5f) * 2);
-			int yMove = moves[i][1];// (int) (((i % 2) - 0.5f) * 2);
+			int xMove = moves[i][0] * SAMPLE_RATE;// (int) (((i / 2) - 0.5f) *
+													// 2);
+			int yMove = moves[i][1] * SAMPLE_RATE;// (int) (((i % 2) - 0.5f) *
+													// 2);
 			int posX = x;
 			int posY = y;
-			for (int j = 0; j <= NOISE_REACH; j++) {
+			for (int j = 0; j <= NOISE_REACH; j += SAMPLE_RATE) {
 				posX += xMove;
 				posY += yMove;
 				if (posX >= 0 && posX < width && posY >= 0 && posY < height

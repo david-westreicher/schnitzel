@@ -87,6 +87,10 @@ public class Util {
 		return Math.max(Math.abs(i - x), Math.abs(j - y));
 	}
 
+	public static float distance(float x, float y) {
+		return Math.max(Math.abs(x), Math.abs(y));
+	}
+
 	public static MapLocation closest(MapLocation loc, MapLocation[] others) {
 		if (others.length == 0)
 			return null;

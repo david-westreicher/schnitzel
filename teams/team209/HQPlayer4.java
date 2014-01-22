@@ -12,7 +12,7 @@ import battlecode.common.RobotType;
 public class HQPlayer4 extends Player {
 
 	public enum Action {
-		DO_NOTHING, NEW_MEETING, ATTACK
+		DO_NOTHING, NEW_MEETING, ATTACK, WAIT
 	}
 
 	private static final int MAX_ROBOTS = GameConstants.MAX_ROBOTS;
@@ -21,7 +21,7 @@ public class HQPlayer4 extends Player {
 	private int[][] map;
 	private MapLocation loc;
 	private MapLocation meeting;
-	private int soldierType;
+	private int soldierID;
 	private double[][] bestNoisePos;
 	private int bestNoisePosIndex;
 	private MapLocation lastMeeting;
@@ -33,6 +33,8 @@ public class HQPlayer4 extends Player {
 	public HQPlayer4(RobotController rc) throws GameActionException {
 		this.rc = rc;
 		loc = rc.getLocation();
+		BroadCaster.broadCastAction(rc, frequencyband, Action.WAIT);
+		tryToSpawn();
 		Util.tick();
 		// sensing map= 94191 for(60x60)
 		// sensing map= 90589 for(60x60)
@@ -42,10 +44,12 @@ public class HQPlayer4 extends Player {
 		Util.tock("sensing map");
 		OptimizedGraph.init(map);
 		Util.tick();
+		tryToSpawn();
 		// Pathing2 from map= 11479 bc
 		// Pathing2 from map= 4661 bc
 		p = new OptimizedPathing(map);
 		Util.tock("Pathing2 from map");
+		tryToSpawn();
 		// path from map= 78707 bc
 		// path from map= 77580 bc
 
@@ -58,6 +62,7 @@ public class HQPlayer4 extends Player {
 		bestNoisePos = Analyser.findBestNoisePos(rc, map, loc);
 		bestNoisePosIndex = 0;
 		Util.tock("findBestNoisePos from map");
+		tryToSpawn();
 		// Util.tick();
 		// generatePathToMeetingPoint();
 		// Util.tock("generatePathToMeetingPoint from map");
@@ -67,7 +72,7 @@ public class HQPlayer4 extends Player {
 		MapLocation attackLoc = Util.closest(loc,
 				rc.sensePastrLocations(rc.getTeam().opponent()));
 		if (attackLoc != null) {
-			//System.out.println("generating new attack meeting point");
+			// System.out.println("generating new attack meeting point");
 			MapLocation[] path = Util.mergePaths(p.path(meeting, attackLoc),
 					p.path(attackLoc, meeting));
 			BroadCaster.broadCast(rc, path, frequencyband - 1,
@@ -143,28 +148,25 @@ public class HQPlayer4 extends Player {
 	@Override
 	public void run() throws GameActionException {
 		if (!Shooting.tryToShoot(rc)) {
-			if (rc.isActive()) {
-				// System.out.println(rc.senseTeamMilkQuantity(rc.getTeam()
-				// .opponent()));
-				if (soldierType % 10 == 0) {
-					Util.tick();
-					// if attack
-					generatePathToMeetingPoint();
-					Util.tock("generatePathToMeetingPoint from map");
-					rc.broadcast(BroadCaster.MEETING_CONSTRUCTED, 0);
-				}
-				if (tryToSpawn()) {
-					soldierType++;
-					soldiersAlive = calculateSoldiersAlive();
-					if (soldiersAlive > 8
-							&& lastAttack + 300 < Clock.getRoundNum()) {
-						if (generateAttackMeetingPoint()) {
-							lastAttack = Clock.getRoundNum();
-						}
+			// System.out.println(rc.senseTeamMilkQuantity(rc.getTeam()
+			// .opponent()));
+			if (rc.isActive() && soldierID % 10 == 0) {
+				Util.tick();
+				// if attack
+				generatePathToMeetingPoint();
+				Util.tock("generatePathToMeetingPoint from map");
+				rc.broadcast(BroadCaster.MEETING_CONSTRUCTED, 0);
+			}
+			if (tryToSpawn()) {
+				soldierID++;
+				soldiersAlive = calculateSoldiersAlive();
+				if (soldiersAlive > 8 && lastAttack + 300 < Clock.getRoundNum()) {
+					if (generateAttackMeetingPoint()) {
+						lastAttack = Clock.getRoundNum();
 					}
-					// rc.setIndicatorString(0, "soldiers alive: " +
-					// soldiersAlive);
 				}
+				// rc.setIndicatorString(0, "soldiers alive: " +
+				// soldiersAlive);
 			}
 		}
 	}

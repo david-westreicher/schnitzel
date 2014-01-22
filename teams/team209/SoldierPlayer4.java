@@ -2,6 +2,7 @@ package team209;
 
 import team209.HQPlayer4.Action;
 import team209.OptimizedPathing.PathType;
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -10,6 +11,7 @@ import battlecode.common.RobotType;
 
 public class SoldierPlayer4 extends Player {
 
+	private static final boolean USE_DYNAMIC_MOVE = false;
 	private RobotController rc;
 	private MapLocation[] path;
 	private MapLocation nextLoc;
@@ -62,7 +64,11 @@ public class SoldierPlayer4 extends Player {
 		}
 		loc = rc.getLocation();
 		Action a = BroadCaster.readAction(rc, frequency);
-		// rc.setIndicatorString(0, "" + a);
+		rc.setIndicatorString(0, "" + a);
+		if (path == null || path.length == 0) {
+			path = BroadCaster.readPath(rc, frequency, PathType.HQ_TO_MEETING);
+			getNextLoc();
+		}
 		if (a == Action.NEW_MEETING) {
 			MapLocation[] newpath = BroadCaster.readPath(rc, frequency,
 					PathType.TO_NEXT_MEETING);
@@ -117,20 +123,23 @@ public class SoldierPlayer4 extends Player {
 			bestDir = 2 + diffY;
 		} else
 			bestDir = 6 - diffY;
-		// int countDir = 0;
-		// boolean right = (Clock.getRoundNum() / 30) % 2 == 0;
-		// if (!right)
-		// bestDir += Util.VALID_DIRECTIONS.length;
-		// while (countDir++ < Util.VALID_DIRECTIONS.length) {
-		// if (tryToMove(bestDir, sneak))
-		// return true;
-		// else
-		// bestDir += right ? 1 : -1;
-		// }
-		if (!tryToMove(bestDir, sneak))
-			if (!tryToMove(bestDir + 1, sneak))
-				return tryToMove(bestDir + Util.VALID_DIRECTIONS.length - 1,
-						sneak);
+		if (USE_DYNAMIC_MOVE) {
+			int countDir = 0;
+			boolean right = (Clock.getRoundNum() / 30) % 2 == 0;
+			if (!right)
+				bestDir += Util.VALID_DIRECTIONS.length;
+			while (countDir++ < Util.VALID_DIRECTIONS.length) {
+				if (tryToMove(bestDir, sneak))
+					return true;
+				else
+					bestDir += right ? 1 : -1;
+			}
+		} else {
+			if (!tryToMove(bestDir, sneak))
+				if (!tryToMove(bestDir + 1, sneak))
+					return tryToMove(
+							bestDir + Util.VALID_DIRECTIONS.length - 1, sneak);
+		}
 		return false;
 	}
 

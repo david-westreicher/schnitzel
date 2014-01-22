@@ -36,8 +36,21 @@ public class NoiseTower extends Player {
 		 * TerrainTile.NORMAL || tile == TerrainTile.ROAD) { dist++; } else
 		 * break; } }
 		 */
-		for (int i = 0; i < 8; i++)
-			distances[i] = noiseReach;
+		int attackLoc[] = new int[2];
+		for (int i = 0; i < 8; i++) {
+			int xMove = Analyser.moves[i][0];
+			int yMove = Analyser.moves[i][1];
+			int j = noiseReach;
+			do {
+				attackLoc[0] = loc.x + xMove * j;
+				attackLoc[1] = loc.y + yMove * j;
+				TerrainTile tt = rc.senseTerrainTile(new MapLocation(
+						attackLoc[0], attackLoc[1]));
+				if (tt != TerrainTile.OFF_MAP)
+					break;
+			} while (j-- > 0);
+			distances[i] = Math.min(j + 1, noiseReach);
+		}
 	}
 
 	@Override
