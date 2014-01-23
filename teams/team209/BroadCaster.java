@@ -9,6 +9,7 @@ import team209.Graph.Node;
 import team209.HQPlayer4.Action;
 import team209.OptimizedPathing.PathType;
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
@@ -24,6 +25,9 @@ public class BroadCaster {
 	private static final int PATH_CHANNEL_START = 2;
 	private static final int FREQUENCY_BAND_SIZE = 30001;
 	public static final int MEETING_CONSTRUCTED = 65321;
+	public static final int SAUSAGE_HEAD = 65322;
+	public static final int ATTACK_SUCCESSFULL = 65323;
+	public static final int NEW_ATTACK = 65324;
 
 	public static void broadCast(RobotController rc, Graph graph)
 			throws GameActionException {
@@ -157,5 +161,10 @@ public class BroadCaster {
 				* FREQUENCY_BAND_SIZE + PATH_CHANNEL_START)];
 		// System.out.println("readAction " + frequency + ": " + a);
 		return a;
+	}
+
+	public static void broadCast(RobotController rc, int frequency,
+			MapLocation add) throws GameActionException {
+		broadCast(rc, frequency, add.x, add.y);
 	}
 }

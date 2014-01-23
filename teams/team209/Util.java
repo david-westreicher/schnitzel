@@ -11,7 +11,7 @@ import team209.Graph.Edge;
 
 public class Util {
 
-	public static final boolean USE_LOGGING = false;
+	public static final boolean USE_LOGGING = true;
 	public static Random RAND;
 	private static int start;
 	private static int startRound;
