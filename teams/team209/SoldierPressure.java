@@ -1,7 +1,6 @@
 package team209;
 
 import team209.HQPressure.States;
-import team209.OptimizedPathing.PathType;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -48,8 +47,7 @@ public class SoldierPressure extends Player {
 			Direction retreatDirection = Shooting.retreat(rc, hp,
 					RobotType.SOLDIER.sensorRadiusSquared);
 			if (retreatDirection != null) {
-				int dir = getDirectionIndex(retreatDirection);
-				if (tryToMove(dir, false))
+				if (dynamicMove(loc, loc.add(retreatDirection), false))
 					return;
 			}
 		}
@@ -57,8 +55,8 @@ public class SoldierPressure extends Player {
 		if (Shooting.tryToShoot(rc, RobotType.SOLDIER.attackRadiusMaxSquared))
 			return;
 		States hqState = BroadCaster.readState(rc);
-		rc.setIndicatorString(0, "hqState: " + hqState + ", state: "
-				+ currentState);
+		// rc.setIndicatorString(0, "hqState: " + hqState + ", state: "
+		// + currentState);
 		switch (currentState) {
 		case HOLD:
 			hold();
@@ -93,7 +91,7 @@ public class SoldierPressure extends Player {
 		if (newAttack == 0)
 			return;
 		team209.HQPressure.PathType pathType = HQPressure.PathType.values()[newAttack - 1];
-		rc.setIndicatorString(2, "pathType: " + pathType);
+		// rc.setIndicatorString(2, "pathType: " + pathType);
 		// System.out.println("new attack " + pathType);
 		switch (pathType) {
 		case ATTACK_PATH:
@@ -126,8 +124,8 @@ public class SoldierPressure extends Player {
 				}
 				getNextLoc();
 			}
-			rc.setIndicatorString(1, "pathing to: " + nextLoc + ", ["
-					+ currentLocIndex + "/" + currentPath.length + "]");
+			// rc.setIndicatorString(1, "pathing to: " + nextLoc + ", ["
+			// + currentLocIndex + "/" + currentPath.length + "]");
 			boolean hasMoved = dynamicMove(loc, nextLoc, false);
 			if (currentLocIndex != currentPath.length) {
 				if (!USE_DYNAMIC_MOVE && !hasMoved) {
@@ -143,7 +141,8 @@ public class SoldierPressure extends Player {
 				}
 			} else
 				USE_DYNAMIC_MOVE = false;
-			rc.setIndicatorString(2, "USE_DYNAMIC_MOVE: " + USE_DYNAMIC_MOVE);
+			// rc.setIndicatorString(2, "USE_DYNAMIC_MOVE: " +
+			// USE_DYNAMIC_MOVE);
 		}
 	}
 

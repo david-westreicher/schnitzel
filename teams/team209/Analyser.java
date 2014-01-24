@@ -1,12 +1,6 @@
 package team209;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.PriorityQueue;
-
 import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
@@ -16,7 +10,7 @@ public class Analyser {
 	// the number of samples skipped per horizontal or lateral line
 	// most accurate score (SAMPLE_RATE = 1), worse accuracy but faster
 	// (SAMPLE_RATE>1)
-	private static final int SAMPLE_RATE = 1;
+	private static final int SAMPLE_RATE = 2;
 	private static double[][] cowGrowth;
 	private static int NOISE_REACH = (int) (Math
 			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5) + 1;

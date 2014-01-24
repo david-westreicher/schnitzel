@@ -1,7 +1,5 @@
 package team209;
 
-import team209.HQPlayer4.Action;
-import team209.OptimizedPathing.PathType;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -40,7 +38,8 @@ public class HQPressure extends Player {
 		this.rc = rc;
 		this.opponent = rc.getTeam().opponent();
 		loc = rc.getLocation();
-		BroadCaster.broadCastAction(rc, 0, Action.HOLD);
+		currentState = States.HOLD;
+		BroadCaster.broadCastState(rc, currentState);
 		tryToSpawn();
 		map = Analyser.senseMap(rc);
 		tryToSpawn();
@@ -48,9 +47,10 @@ public class HQPressure extends Player {
 		tryToSpawn();
 		p = new OptimizedPathing(map);
 		tryToSpawn();
+		Util.tick();
 		bestNoisePos = Analyser.findBestNoisePos(rc, map, loc);
+		Util.tock("findBestNoisePos");
 		bestNoisePosIndex = 0;
-		currentState = States.HOLD;
 		tryToSpawn();
 	}
 
@@ -71,7 +71,8 @@ public class HQPressure extends Player {
 				enemyPastrs = rc.sensePastrLocations(opponent);
 				if (enemyPastrs.length == 1)
 					changeState(States.MILK);
-				if (attackLoc == null && enemyPastrs.length > 1)
+				if (rc.senseRobotCount() > HOLD_SOLDIERCOUNT_THRESHOLD
+						&& attackLoc == null && enemyPastrs.length > 1)
 					changeState(States.RAGE_MODE);
 				break;
 			case MILK:
@@ -79,7 +80,7 @@ public class HQPressure extends Player {
 				int myPastrs = rc.sensePastrLocations(rc.getTeam()).length;
 				int pastrsBuildedOnRadio = rc
 						.readBroadcast(BroadCaster.PASTR_BUILDED);
-				rc.setIndicatorString(2, pastrsBuildedOnRadio + "");
+				// rc.setIndicatorString(2, pastrsBuildedOnRadio + "");
 				if (myPastrs == 0 && pastrsBuildedOnRadio > 0)
 					if (pastrsBuildedOnRadio + BUILD_PASTR_ROUNDS < Clock
 							.getRoundNum()) {
@@ -98,7 +99,7 @@ public class HQPressure extends Player {
 				break;
 			}
 			tryToSpawn();
-			rc.setIndicatorString(0, currentState + "");
+			// rc.setIndicatorString(0, currentState + "");
 		}
 	}
 
@@ -107,7 +108,7 @@ public class HQPressure extends Player {
 			rc.broadcast(BroadCaster.ATTACK_SWARM_ALIVE, 0);
 		else {
 			attackLoc = null;
-			System.out.println("swarm died");
+			// System.out.println("swarm died");
 			return;
 		}
 		if (rc.readBroadcast(BroadCaster.NEW_ATTACK) != 0)
@@ -193,7 +194,7 @@ public class HQPressure extends Player {
 		attackLoc = Util.closest(from, enemyPastrLocations);
 		// TODO what happens if we have no meeting point?
 		if (attackLoc != null) {
-			System.out.println("generateAttackPath");
+			// System.out.println("generateAttackPath");
 			MapLocation[] pathToAttack = p.path(from, attackLoc);
 			// TODO what happens if we have no meeting point?
 			if (pathToAttack != null && pathToAttack.length > 0) {

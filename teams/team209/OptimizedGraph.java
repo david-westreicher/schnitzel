@@ -13,7 +13,7 @@ public class OptimizedGraph {
 
 	private static void makeEdges(int[] recs, int[][] map) {
 		int nodeMap[][] = map;
-		//System.out.println("numberOfRecs" + numberOfRecs);
+		// System.out.println("numberOfRecs" + numberOfRecs);
 		for (int k = 0; k < numberOfRecs; k++) {
 			int recIndex = k * 4;
 			int startX = recs[recIndex + 0];
@@ -180,7 +180,7 @@ public class OptimizedGraph {
 		// makeEdges from map= 10920 bc (ignore roads)
 		makeEdges(rects, map);
 		Util.tock("makeEdges from map");
-		//Util.printMap(map);
+		// Util.printMap(map);
 		// Util.printEdges(edges,numberOfRecs);
 	}
 }

@@ -1,13 +1,11 @@
 package team209;
 
-import java.util.HashMap;
 import java.util.Random;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import team209.Graph.Edge;
 
 public class Util {
 
@@ -62,20 +60,6 @@ public class Util {
 			for (int j = 0; j < rec.length; j++)
 				System.out.print(rec[j] + ", ");
 			System.out.print("\n");
-		}
-	}
-
-	public static void printEdges(HashMap<Integer, HashMap<Integer, Edge>> edges) {
-		if (USE_LOGGING) {
-			int edgesNum = 0;
-			for (Integer from : edges.keySet()) {
-				for (Integer to : edges.get(from).keySet()) {
-					edgesNum++;
-					System.out.println("Edge from: " + valToSymbol(from)
-							+ ", to: " + valToSymbol(to));
-				}
-			}
-			System.out.println("Edges num: " + edgesNum);
 		}
 	}
 
