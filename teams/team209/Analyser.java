@@ -16,7 +16,7 @@ public class Analyser {
 	// the number of samples skipped per horizontal or lateral line
 	// most accurate score (SAMPLE_RATE = 1), worse accuracy but faster
 	// (SAMPLE_RATE>1)
-	private static final int SAMPLE_RATE = 3;
+	private static final int SAMPLE_RATE = 1;
 	private static double[][] cowGrowth;
 	private static int NOISE_REACH = (int) (Math
 			.sqrt(RobotType.NOISETOWER.attackRadiusMaxSquared) / 1.5) + 1;
@@ -45,6 +45,16 @@ public class Analyser {
 			for (int j = 0; j < height; j++)
 				if (map[i][j] == -1)
 					cowGrowth[i][j] = -1;
+		// don't build pastrs near hq
+		for (int i = -2; i <= 2; i++) {
+			for (int j = -2; j <= 2; j++) {
+				int x = hqLoc.x + i;
+				int y = hqLoc.y + j;
+				if (x >= 0 && x < width && y >= 0 && y < height) {
+					cowGrowth[x][y] = -1;
+				}
+			}
+		}
 
 		// possNoisePos sort= 182078 bc
 		Util.tick();
@@ -57,15 +67,17 @@ public class Analyser {
 				float dist = distanceToMidLine(i, j);
 				if (dist <= 0)
 					continue;
-				// System.out.println(i + "," + j + ": " + dist);
 				// cowGrowth[i][j] = -3;
-				double newScore = analyse(i, j) * dist;
+				double score = analyse(i, j);
+				double newScore = score * 2 + dist;
+				// System.out.println(i + "," + j + ": " + dist + " : " +
+				// score);
 				if (newScore > priorityqueue[MAX_PASTR_LOCS - 1][2])
 					insert(new double[] { i, j, newScore });
 			}
 		}
 		Util.tock("possNoisePos sort");
-
+		// printPriorityQueue();
 		// Util.printMap(cowGrowth);
 		// System.out.println("analyzed map");
 		return priorityqueue;
@@ -153,6 +165,28 @@ public class Analyser {
 			}
 		}
 		return score;
+	}
+
+	public static int[][] senseMap(RobotController rc) {
+		int width = Math.min(100, rc.getMapWidth());
+		int height = Math.min(100, rc.getMapHeight());
+		int[][] localmap = new int[width][height];
+		for (int i = width; --i >= 0;)
+			for (int j = height; --j >= 0;)
+				localmap[i][j] = rc.senseTerrainTile(new MapLocation(i, j))
+						.ordinal() - 3;
+		MapLocation enemyHQ = rc.senseEnemyHQLocation();
+		for (int i = -2; i <= 2; i++) {
+			for (int j = -2; j <= 2; j++) {
+				int x = enemyHQ.x + i;
+				int y = enemyHQ.y + j;
+				if (x >= 0 && x < width && y >= 0 && y < height) {
+					localmap[x][y] = -1;
+				}
+			}
+		}
+		// Util.printMap(localmap);
+		return localmap;
 	}
 
 }

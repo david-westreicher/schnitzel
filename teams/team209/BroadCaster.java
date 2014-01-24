@@ -7,6 +7,7 @@ import java.util.List;
 import team209.Graph.Edge;
 import team209.Graph.Node;
 import team209.HQPlayer4.Action;
+import team209.HQPressure.States;
 import team209.OptimizedPathing.PathType;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
@@ -22,12 +23,15 @@ public class BroadCaster {
 	public static final int HQ_STARTROUND_CHANNEL = 0;
 	public static final int TYPE_CHANNEL = 0;
 	public static final int CURRENT_FREQUENCY_BAND = 1;
-	private static final int PATH_CHANNEL_START = 2;
 	private static final int FREQUENCY_BAND_SIZE = 30001;
 	public static final int MEETING_CONSTRUCTED = 65321;
 	public static final int SAUSAGE_HEAD = 65322;
+	public static final int HQ_STATE = 0;
+	public static final int PASTR_BUILDED = 1;
+	private static final int PATH_CHANNEL_START = 2;
 	public static final int ATTACK_SUCCESSFULL = 65323;
 	public static final int NEW_ATTACK = 65324;
+	public static final int ATTACK_SWARM_ALIVE = 65322;
 
 	public static void broadCast(RobotController rc, Graph graph)
 			throws GameActionException {
@@ -132,6 +136,30 @@ public class BroadCaster {
 		rc.broadcast(startChannel, path.length);
 	}
 
+	public static void broadCast(RobotController rc, MapLocation[] path,
+			HQPressure.PathType pt) throws GameActionException {
+		int startChannel = PATH_CHANNEL_START + pt.ordinal() * 10000 + 1;
+		int channel = startChannel + 1;
+		for (MapLocation ml : path) {
+			rc.broadcast(channel++, toInt2(ml.x, ml.y));
+		}
+		rc.broadcast(startChannel, path.length);
+	}
+
+	public static MapLocation[] readPath(RobotController rc,
+			HQPressure.PathType pt) throws GameActionException {
+		int startChannel = PATH_CHANNEL_START + pt.ordinal() * 10000 + 1;
+		int pathlength = rc.readBroadcast(startChannel);
+		if (pathlength == 0)
+			return new MapLocation[0];
+		MapLocation[] ml = new MapLocation[pathlength];
+		for (int i = 0; i < pathlength; i++) {
+			int[] xy = fromInt2(rc.readBroadcast(startChannel + 1 + i));
+			ml[i] = new MapLocation(xy[0], xy[1]);
+		}
+		return ml;
+	}
+
 	public static MapLocation[] readPath(RobotController rc, int frequency,
 			PathType pt) throws GameActionException {
 		int startChannel = PATH_CHANNEL_START + (frequency % 2)
@@ -166,5 +194,16 @@ public class BroadCaster {
 	public static void broadCast(RobotController rc, int frequency,
 			MapLocation add) throws GameActionException {
 		broadCast(rc, frequency, add.x, add.y);
+	}
+
+	public static HQPressure.States readState(RobotController rc)
+			throws GameActionException {
+		return HQPressure.States.values()[rc
+				.readBroadcast(BroadCaster.HQ_STATE)];
+	}
+
+	public static void broadCastState(RobotController rc,
+			HQPressure.States currentState) throws GameActionException {
+		rc.broadcast(BroadCaster.HQ_STATE, currentState.ordinal());
 	}
 }

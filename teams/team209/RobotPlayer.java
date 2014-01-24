@@ -11,9 +11,9 @@ public class RobotPlayer {
 		Util.init(rc);
 		try {
 			if (rc.getType() == RobotType.HQ) {
-				p = new HQPlayer4(rc);
+				p = new HQPressure(rc);
 			} else if (rc.getType() == RobotType.SOLDIER) {
-				p = new PressureBot(rc);
+				p = new SoldierPressure(rc);
 			} else if (rc.getType() == RobotType.NOISETOWER) {
 				p = new NoiseTower(rc);
 			}

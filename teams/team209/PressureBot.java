@@ -5,13 +5,17 @@ import team209.OptimizedPathing.PathType;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
 import battlecode.common.RobotType;
 
 public class PressureBot extends Player {
 
 	private static final boolean USE_DYNAMIC_MOVE = false;
+	private static final double RETREAT_HEALTH_THRESHOLD = 100 / 2;
 	private RobotController rc;
 	private MapLocation hq;
 	private MapLocation lastSquare;
@@ -25,6 +29,7 @@ public class PressureBot extends Player {
 	private int minDistance = 2;
 	private RobotType constructionType;
 	private boolean attack;
+	private double hp;
 
 	public PressureBot(RobotController rc) throws GameActionException {
 		this.rc = rc;
@@ -36,6 +41,14 @@ public class PressureBot extends Player {
 	@Override
 	public void run() throws GameActionException {
 		loc = rc.getLocation();
+		hp = rc.getHealth();
+		Direction retreatDirection = Shooting.retreat(rc, hp,
+				RobotType.SOLDIER.sensorRadiusSquared);
+		if (hp < RETREAT_HEALTH_THRESHOLD && retreatDirection != null) {
+			int dir = getDirectionIndex(retreatDirection);
+			tryToMove(dir, false);
+			return;
+		}
 		if (Shooting.tryToShoot(rc))
 			return;
 		Action a = BroadCaster.readAction(rc, frequency);
@@ -55,6 +68,17 @@ public class PressureBot extends Player {
 			break;
 		}
 
+	}
+
+	private int getDirectionIndex(Direction retreatDirection) {
+		int index = 0;
+		// rc.setIndicatorString(1, "bestDir: " + bestDir);
+		for (Direction dir : Util.VALID_DIRECTIONS) {
+			if (retreatDirection == dir)
+				break;
+			index++;
+		}
+		return index;
 	}
 
 	private void pathToAttack() throws GameActionException {
