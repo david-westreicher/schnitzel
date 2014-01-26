@@ -39,15 +39,6 @@ def printStats():
 		saveFile.write(map+",")
 	saveFile.write("sum")
 	saveFile.write("\n")
-	for enemy in stats.iterkeys():
-		saveFile.write(enemy +",")
-		sum = 0
-		for map in stats[enemy].iterkeys():
-			if stats[enemy][map]==1:
-				sum+=1
-			saveFile.write(str(stats[enemy][map])+",")
-		saveFile.write(str(sum/float(len(maps))*100))
-		saveFile.write("\n")
 		
 
 #set team A to our team
@@ -58,12 +49,17 @@ enemiesFolder = "teams"
 stats = dict()
 replace("bc.conf", "bc.game.team-a=.*","bc.game.team-a="+ourteam)
 enemies = listdir(enemiesFolder)
+if len(sys.argv)==2:
+	enemies = [str(sys.argv[1])]
 maps = listdir(mapFolder)
 matches = len(enemies)*len(maps)
 currentMatch = 0
+printStats()
 for enemy in enemies:
 	replace("bc.conf", "bc.game.team-b=.*","bc.game.team-b="+enemy)
+	saveFile.write(enemy +",")
 	stats[enemy] = dict()
+	sum = 0
 	for map in maps:
 		replace("bc.conf", "bc.game.maps=.*","bc.game.maps="+map)
 		currentMatch+=1
@@ -72,5 +68,10 @@ for enemy in enemies:
 		output = Popen(["ant","file"], stdout=PIPE).communicate()[0]
 		win = analyseOutput(output);
 		stats[enemy][map] = win
-printStats()
+		if win==1:
+			sum+=1
+		saveFile.write(str(stats[enemy][map])+",")
+		saveFile.flush()
+	saveFile.write(str(sum/float(len(maps))*100))
+	saveFile.write("\n")
 
