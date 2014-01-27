@@ -28,6 +28,7 @@ public class SoldierPressure extends Player {
 	private int stuck;
 	private int stuckedAt;
 	private double hp;
+	private int attackIndex = 1;
 
 	public SoldierPressure(RobotController rc) {
 		this.rc = rc;
@@ -55,8 +56,8 @@ public class SoldierPressure extends Player {
 		if (Shooting.tryToShoot(rc, RobotType.SOLDIER.attackRadiusMaxSquared))
 			return;
 		States hqState = BroadCaster.readState(rc);
-		// rc.setIndicatorString(0, "hqState: " + hqState + ", state: "
-		// + currentState);
+		rc.setIndicatorString(0, "hqState: " + hqState + ", state: "
+				+ currentState);
 		switch (currentState) {
 		case HOLD:
 			hold();
@@ -87,11 +88,13 @@ public class SoldierPressure extends Player {
 	}
 
 	private void checkForNewAttack() throws GameActionException {
-		int newAttack = rc.readBroadcast(BroadCaster.NEW_ATTACK);
-		if (newAttack == 0)
+		int[] newAttack = BroadCaster.fromInt2(rc
+				.readBroadcast(BroadCaster.NEW_ATTACK));
+		if (newAttack[0] != attackIndex)
 			return;
-		team209.HQPressure.PathType pathType = HQPressure.PathType.values()[newAttack - 1];
-		// rc.setIndicatorString(2, "pathType: " + pathType);
+		attackIndex++;
+		team209.HQPressure.PathType pathType = HQPressure.PathType.values()[newAttack[1]];
+		rc.setIndicatorString(2, "pathType: " + pathType);
 		// System.out.println("new attack " + pathType);
 		switch (pathType) {
 		case ATTACK_PATH:
@@ -104,6 +107,7 @@ public class SoldierPressure extends Player {
 					HQPressure.PathType.ATTACK_PATH);
 			currentPath = Util.mergePaths(currentPath, backHomePath);
 			currentState = States.MEET;
+			attackIndex = 1;
 			break;
 		default:
 			break;
@@ -124,8 +128,8 @@ public class SoldierPressure extends Player {
 				}
 				getNextLoc();
 			}
-			// rc.setIndicatorString(1, "pathing to: " + nextLoc + ", ["
-			// + currentLocIndex + "/" + currentPath.length + "]");
+			rc.setIndicatorString(1, "pathing to: " + nextLoc + ", ["
+					+ currentLocIndex + "/" + currentPath.length + "]");
 			boolean hasMoved = dynamicMove(loc, nextLoc, false);
 			if (currentLocIndex != currentPath.length) {
 				if (!USE_DYNAMIC_MOVE && !hasMoved) {

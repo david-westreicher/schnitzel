@@ -36,6 +36,7 @@ public class OptimizedPathing {
 		this.edges = OptimizedGraph.edges;
 		this.edgeInfo = OptimizedGraph.edgeInfo;
 		int recNum = OptimizedGraph.numberOfRecs;
+		// TODO use int[] instead of metanodes
 		allNodes = new MetaNode[recNum];
 		for (int i = 0; i < recNum; i++) {
 			allNodes[i] = new MetaNode(i);

@@ -33,6 +33,7 @@ public class HQPressure extends Player {
 	private MapLocation meeting;
 	private boolean firstSpawn = true;
 	private MapLocation attackLoc;
+	private int attackIndex = 0;
 
 	public HQPressure(RobotController rc) throws GameActionException {
 		this.rc = rc;
@@ -108,17 +109,16 @@ public class HQPressure extends Player {
 			rc.broadcast(BroadCaster.ATTACK_SWARM_ALIVE, 0);
 		else {
 			attackLoc = null;
-			// System.out.println("swarm died");
+			attackIndex = 0;
+			System.out.println("swarm died");
 			return;
 		}
-		if (rc.readBroadcast(BroadCaster.NEW_ATTACK) != 0)
-			rc.broadcast(BroadCaster.NEW_ATTACK, 0);
 		if (rc.readBroadcast(BroadCaster.ATTACK_SUCCESSFULL) == 1) {
 			MapLocation lastAttackLoc = attackLoc;
 			boolean newAttackGenerated = generateAttackPath(attackLoc);
 			if (newAttackGenerated) {
-				rc.broadcast(BroadCaster.NEW_ATTACK,
-						PathType.ATTACK_PATH.ordinal() + 1);
+				BroadCaster.broadCast(rc, BroadCaster.NEW_ATTACK,
+						++attackIndex, PathType.ATTACK_PATH.ordinal());
 			} else {
 				// System.out.println("generating path home from: "
 				// + lastAttackLoc + ", to: " + meeting);
@@ -126,10 +126,11 @@ public class HQPressure extends Player {
 				if (pathToAttack != null && pathToAttack.length > 0) {
 					BroadCaster.broadCast(rc, pathToAttack,
 							PathType.ATTACK_PATH);
+					BroadCaster.broadCast(rc, BroadCaster.NEW_ATTACK,
+							++attackIndex, PathType.BACK_HOME_PATH.ordinal());
 					attackLoc = null;
+					attackIndex = 0;
 				}
-				rc.broadcast(BroadCaster.NEW_ATTACK,
-						PathType.BACK_HOME_PATH.ordinal() + 1);
 			}
 			rc.broadcast(BroadCaster.ATTACK_SUCCESSFULL, 0);
 		}
@@ -194,10 +195,13 @@ public class HQPressure extends Player {
 		attackLoc = Util.closest(from, enemyPastrLocations);
 		// TODO what happens if we have no meeting point?
 		if (attackLoc != null) {
-			// System.out.println("generateAttackPath");
 			MapLocation[] pathToAttack = p.path(from, attackLoc);
 			// TODO what happens if we have no meeting point?
 			if (pathToAttack != null && pathToAttack.length > 0) {
+				System.out.println("generateAttackPath " + from + ", to "
+						+ attackLoc);
+				for (MapLocation loc : pathToAttack)
+					System.out.println("generateAttackPath " + loc);
 				BroadCaster.broadCast(rc, pathToAttack, PathType.ATTACK_PATH);
 				return true;
 			}
