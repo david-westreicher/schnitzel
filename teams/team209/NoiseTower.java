@@ -4,7 +4,6 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
-import battlecode.common.Team;
 import battlecode.common.TerrainTile;
 
 public class NoiseTower extends Player {
@@ -27,33 +26,28 @@ public class NoiseTower extends Player {
 		this.height = rc.getMapHeight();
 		distances = new int[8];
 		loc = rc.getLocation();
-		
 		updateCenter();
-		
-		/*
-		 * for (int i = 0; i < 4; i++) { int xMove = (int) (((i / 2) - 0.5f) *
-		 * 2); int yMove = (int) (((i % 2) - 0.5f) * 2); int posX = loc.x; int
-		 * posY = loc.y; int dist = 1; for (int j = 0; j < noiseReach; j++) {
-		 * posX += xMove; posY += yMove; TerrainTile tile =
-		 * rc.senseTerrainTile(new MapLocation(posX, posY)); if (tile ==
-		 * TerrainTile.NORMAL || tile == TerrainTile.ROAD) { dist++; } else
-		 * break; } }
-		 */
+	}
 
-		int attackLoc[] = new int[2];
+	private void calcDistances(MapLocation center) {
 		for (int i = 0; i < 8; i++) {
 			int xMove = Analyser.moves[i][0];
 			int yMove = Analyser.moves[i][1];
-			int j = noiseReach;
-			do {
-				attackLoc[0] = loc.x + xMove * j;
-				attackLoc[1] = loc.y + yMove * j;
-				TerrainTile tt = rc.senseTerrainTile(new MapLocation(
-						attackLoc[0], attackLoc[1]));
-				if (tt != TerrainTile.OFF_MAP)
+			int reach = 4;
+			while (true) {
+				int x = center.x + xMove * reach;
+				int y = center.y + yMove * reach;
+				MapLocation m = new MapLocation(x, y);
+				int distance = m.distanceSquaredTo(loc);
+				if (distance >= RobotType.NOISETOWER.attackRadiusMaxSquared) {
+					reach--;
 					break;
-			} while (j-- > 0);
-			distances[i] = Math.min(j + 1, noiseReach);
+				} else if (rc.senseTerrainTile(m) == TerrainTile.OFF_MAP)
+					break;
+				else
+					reach++;
+			}
+			distances[i] = reach;
 		}
 	}
 
@@ -68,10 +62,10 @@ public class NoiseTower extends Player {
 				* (distances[i] - currentDist), center.y + yMove
 				* (distances[i] - currentDist));
 		if (rc.isActive()) {
-			updateCenter();
 			rc.attackSquare(attack);
+			updateCenter();
 			currentDist += DIST_PLUS;
-			if (distances[i] - currentDist <= 1) {
+			if (distances[i] - currentDist < 4) {
 				currentDiag = (currentDiag + 1) % 8;
 				currentDist = 0;
 			}
@@ -79,21 +73,23 @@ public class NoiseTower extends Player {
 	}
 
 	private void updateCenter() {
-		// get farm location
-		MapLocation[] pastrLocations = rc.sensePastrLocations( rc.getTeam() );
-
-		if( pastrLocations.length > 0){
-			for (int i = 0; i < pastrLocations.length; i++) {
-				if( ( loc.x + 2 <= pastrLocations[i].x || loc.x - 2 <= pastrLocations[i].x ) && 
-					( loc.y + 2 <= pastrLocations[i].y || loc.y - 2 <= pastrLocations[i].y ) ){
-					center = pastrLocations[i];
-					break;
-				}
+		MapLocation[] pastrLocations = rc.sensePastrLocations(rc.getTeam());
+		if (pastrLocations.length == 0) {
+			if (center != loc) {
+				calcDistances(loc);
 			}
-
-		}else{
 			center = loc;
+			return;
 		}
-		
+		for (MapLocation pastr : pastrLocations) {
+			if (pastr.distanceSquaredTo(loc) <= 2) {
+				if (center == null || !pastr.equals(center)) {
+					calcDistances(pastr);
+				}
+				center = pastr;
+				break;
+			}
+		}
+
 	}
 }

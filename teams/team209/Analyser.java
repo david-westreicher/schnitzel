@@ -17,10 +17,10 @@ public class Analyser {
 	private static double priorityqueue[][];
 	private static int height;
 	private static int width;
-	static int[][] moves = new int[][] { new int[] { 1, 1 },
-			new int[] { 1, 0 }, new int[] { 1, -1 }, new int[] { 0, -1 },
-			new int[] { -1, -1 }, new int[] { -1, 0 }, new int[] { -1, 1 },
-			new int[] { 0, 1 } };
+	static int[][] moves = new int[][] { new int[] { 0, -1 },
+			new int[] { 1, 0 }, new int[] { 0, 1 }, new int[] { -1, 0 },
+			new int[] { 1, -1 }, new int[] { 1, 1 }, new int[] { -1, 1 },
+			new int[] { -1, -1 } };
 	private static MapLocation hqLoc;
 	private static float[] midNormal;
 	private static float[] mid;
