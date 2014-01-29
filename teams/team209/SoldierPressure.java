@@ -244,7 +244,7 @@ public class SoldierPressure extends Player {
 	}
 
 	private Direction holdMove(Direction bestDir) throws GameActionException {
-		int index = getDirectionIndex(bestDir);
+		int index = Util.getDirectionIndex(bestDir);
 		index += Util.VALID_DIRECTIONS.length;
 		index += Util.RAND.nextBoolean() ? -1 : +1;
 		for (int i = 0; i < bestDirectionArray.length; i++) {
@@ -307,13 +307,4 @@ public class SoldierPressure extends Player {
 		return false;
 	}
 
-	private int getDirectionIndex(Direction retreatDirection) {
-		int index = 0;
-		for (Direction dir : Util.VALID_DIRECTIONS) {
-			if (retreatDirection == dir)
-				break;
-			index++;
-		}
-		return index;
-	}
 }
