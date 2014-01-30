@@ -5,6 +5,7 @@ import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
@@ -13,8 +14,6 @@ public class SoldierPressure extends Player {
 	private static final int bestDirectionArray[] = new int[] { 0, 1, 7, 2, 6,
 			3, 5 };
 	private static final int MIN_DISTANCE = 2;
-	// TODO if stuck use dynamic move
-	private static boolean USE_DYNAMIC_MOVE = false;
 	private static final double RETREAT_HEALTH_THRESHOLD = 50;
 	private RobotController rc;
 	private MapLocation hq;
@@ -25,15 +24,17 @@ public class SoldierPressure extends Player {
 	private MapLocation[] currentPath;
 	private int currentLocIndex;
 	private MapLocation nextLoc;
-	private int stuck;
-	private int stuckedAt;
 	private double hp;
 	private int attackIndex = 1;
+	private int niceMoveRIGHT[] = new int[] { 0, 1, 7, 2, 6, 3, 5, 4 };
+	private int niceMoveLEFT[] = new int[] { 0, 7, 1, 6, 2, 5, 3, 4 };
 
-	public SoldierPressure(RobotController rc) {
+	public SoldierPressure(RobotController rc) throws GameActionException {
 		this.rc = rc;
 		hq = rc.senseHQLocation();
 		currentState = States.HOLD;
+		attackIndex = BroadCaster.fromInt2(rc
+				.readBroadcast(BroadCaster.NEW_ATTACK))[0] + 1;
 	}
 
 	@Override
@@ -90,12 +91,15 @@ public class SoldierPressure extends Player {
 	private void checkForNewAttack() throws GameActionException {
 		int[] newAttack = BroadCaster.fromInt2(rc
 				.readBroadcast(BroadCaster.NEW_ATTACK));
+		rc.setIndicatorString(2, "no new pathType");
 		if (newAttack[0] != attackIndex)
 			return;
 		attackIndex++;
 		team209.HQPressure.PathType pathType = HQPressure.PathType.values()[newAttack[1]];
-		rc.setIndicatorString(2, "pathType: " + pathType);
-		// System.out.println("new attack " + pathType);
+		rc.setIndicatorString(2, "pathType: " + pathType + ", attackIndex: "
+				+ attackIndex);
+		System.out.println("new attack " + pathType + ", " + newAttack[0]
+				+ ", " + attackIndex);
 		switch (pathType) {
 		case ATTACK_PATH:
 			MapLocation[] newAttackPath = BroadCaster.readPath(rc,
@@ -107,7 +111,7 @@ public class SoldierPressure extends Player {
 					HQPressure.PathType.ATTACK_PATH);
 			currentPath = Util.mergePaths(currentPath, backHomePath);
 			currentState = States.MEET;
-			attackIndex = 1;
+			// attackIndex = 1;
 			break;
 		default:
 			break;
@@ -119,64 +123,68 @@ public class SoldierPressure extends Player {
 			int dist = Util.distance(nextLoc.x, nextLoc.y, loc.x, loc.y);
 			if (dist < MIN_DISTANCE) {
 				if (currentLocIndex == currentPath.length) {
-					// rc.setIndicatorString(0, "MEETING_CONSTRUCTED: "
-					// + constructionLevel);
 					if (dist == 0) {
-						finishedPathing();
+						if (finishedPathing())
+							return;
 					} else if (dist < 2)
-						closeToFinishedPathing();
+						if (closeToFinishedPathing())
+							return;
 				}
 				getNextLoc();
 			}
 			rc.setIndicatorString(1, "pathing to: " + nextLoc + ", ["
 					+ currentLocIndex + "/" + currentPath.length + "]");
-			boolean hasMoved = dynamicMove(loc, nextLoc, false);
-			if (currentLocIndex != currentPath.length) {
-				if (!USE_DYNAMIC_MOVE && !hasMoved) {
-					stuck++;
-					if (stuck > 40) {
-						USE_DYNAMIC_MOVE = true;
-						stuck = 0;
-						stuckedAt = Clock.getRoundNum();
-					}
-				}
-				if (stuckedAt + 10 < Clock.getRoundNum()) {
-					USE_DYNAMIC_MOVE = false;
-				}
+			boolean reachedMeeting = false;
+			if (currentLocIndex == currentPath.length
+					&& (currentState == States.MEET || currentState == States.MILK)
+					&& dist < 4) {
+				reachedMeeting = true;
+			}
+			if (reachedMeeting) {
+				if (Clock.getRoundNum() % 5 == 0)
+					dynamicMove(loc, nextLoc, true);
 			} else
-				USE_DYNAMIC_MOVE = false;
-			// rc.setIndicatorString(2, "USE_DYNAMIC_MOVE: " +
-			// USE_DYNAMIC_MOVE);
+				dynamicMove(loc, nextLoc, false);
 		}
 	}
 
-	private void closeToFinishedPathing() throws GameActionException {
+	private boolean closeToFinishedPathing() throws GameActionException {
 		switch (currentState) {
 		case MILK:
 			if (rc.readBroadcast(BroadCaster.PASTR_BUILDED) == 0) {
-				construct(RobotType.PASTR);
-				rc.broadcast(BroadCaster.PASTR_BUILDED, Clock.getRoundNum());
+				if (construct(RobotType.PASTR)) {
+					rc.broadcast(BroadCaster.PASTR_BUILDED, Clock.getRoundNum());
+					return true;
+				}
 			}
 			break;
 		}
+		return false;
 	}
 
-	private void finishedPathing() throws GameActionException {
+	private boolean finishedPathing() throws GameActionException {
 		switch (currentState) {
 		case MILK:
 		case MEET:
-			construct(RobotType.NOISETOWER);
-			break;
+			return construct(RobotType.NOISETOWER);
 		case RAGE_MODE:
 			if (rc.readBroadcast(BroadCaster.ATTACK_SUCCESSFULL) == 0)
 				rc.broadcast(BroadCaster.ATTACK_SUCCESSFULL, 1);
 			break;
 		}
+		return false;
 	}
 
-	private void construct(RobotType type) throws GameActionException {
-		if (rc.isActive() && !rc.isConstructing())
-			rc.construct(type);
+	private boolean construct(RobotType type) throws GameActionException {
+		if (rc.senseNearbyGameObjects(Robot.class,
+				RobotType.SOLDIER.sensorRadiusSquared, rc.getTeam().opponent()).length < rc
+				.senseNearbyGameObjects(Robot.class,
+						RobotType.SOLDIER.sensorRadiusSquared, rc.getTeam()).length)
+			if (!rc.isConstructing() && rc.isActive()) {
+				rc.construct(type);
+				return true;
+			}
+		return false;
 	}
 
 	private void changeState(States newState) throws GameActionException {
@@ -260,34 +268,12 @@ public class SoldierPressure extends Player {
 
 	private boolean dynamicMove(MapLocation loc, MapLocation target,
 			boolean sneak) throws GameActionException {
-		int diffX = -(int) Math.signum(loc.x - target.x);
-		int diffY = -(int) Math.signum(loc.y - target.y);
-		int bestDir = -1;
-		if (diffX == 0)
-			if (diffY > 0)
-				bestDir = 4;
-			else
-				bestDir = 0;
-		else if (diffX > 0) {
-			bestDir = 2 + diffY;
-		} else
-			bestDir = 6 - diffY;
-		if (USE_DYNAMIC_MOVE) {
-			int countDir = 0;
-			boolean right = (Clock.getRoundNum() / 30) % 2 == 0;
-			if (!right)
-				bestDir += Util.VALID_DIRECTIONS.length;
-			while (countDir++ < Util.VALID_DIRECTIONS.length) {
-				if (tryToMove(bestDir, sneak))
-					return true;
-				else
-					bestDir += right ? 1 : -1;
-			}
-		} else {
-			if (!tryToMove(bestDir, sneak))
-				if (!tryToMove(bestDir + 1, sneak))
-					return tryToMove(
-							bestDir + Util.VALID_DIRECTIONS.length - 1, sneak);
+		int bestDir = Util.getDirectionIndex(loc.directionTo(target));
+		int[] niceMove = ((Clock.getRoundNum() / 30) % 2 == 0) ? niceMoveLEFT
+				: niceMoveRIGHT;
+		for (int i = 0; i < 8; i++) {
+			if (tryToMove(niceMove[i] + bestDir, sneak))
+				return true;
 		}
 		return false;
 	}
