@@ -1,4 +1,4 @@
-package team209;
+package seedingteam209;
 
 public class OptimizedGraph {
 	public static final int MAX_RECTS = 2000;
@@ -99,8 +99,6 @@ public class OptimizedGraph {
 	}
 
 	private static void addEdgeReal(int n1num, int n2num, int x, int y) {
-		if (edges[n1num][0] >= MAX_EDGES_PER_NODE)
-			return;
 		int index = ++edges[n1num][0];
 		edges[n1num][index] = n2num;
 		edgeInfo[n1num * MAX_RECTS + n2num][0] = x;
@@ -108,6 +106,7 @@ public class OptimizedGraph {
 	}
 
 	public static int[] makeRects(int[][] rectMap) {
+		// Util.printMap(rectMap);
 		int[] recs = new int[MAX_RECTS * 4];
 		int recsIndex = 0;
 		for (int i = 0; i < width; i++)
@@ -122,7 +121,6 @@ public class OptimizedGraph {
 					j = newJ;
 				}
 			}
-		// Util.printMap(rectMap);
 		numberOfRecs = recsIndex;
 		// System.out.println("Rectangles: " + recs.size());
 		return recs;

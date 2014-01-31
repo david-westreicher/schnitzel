@@ -1,4 +1,4 @@
-package team209;
+package seedingteam209;
 
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -6,7 +6,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
 public class Analyser {
-	private static final int MAX_PASTR_LOCS = 2;
+	private static final int MAX_PASTR_LOCS = 5;
 	// the number of samples skipped per horizontal or lateral line
 	// most accurate score (SAMPLE_RATE = 1), worse accuracy but faster
 	// (SAMPLE_RATE>1)
@@ -17,10 +17,10 @@ public class Analyser {
 	private static double priorityqueue[][];
 	private static int height;
 	private static int width;
-	static int[][] moves = new int[][] { new int[] { 0, -1 },
-			new int[] { 1, 0 }, new int[] { 0, 1 }, new int[] { -1, 0 },
-			new int[] { 1, -1 }, new int[] { 1, 1 }, new int[] { -1, 1 },
-			new int[] { -1, -1 } };
+	static int[][] moves = new int[][] { new int[] { 1, 1 },
+			new int[] { 1, 0 }, new int[] { 1, -1 }, new int[] { 0, -1 },
+			new int[] { -1, -1 }, new int[] { -1, 0 }, new int[] { -1, 1 },
+			new int[] { 0, 1 } };
 	private static MapLocation hqLoc;
 	private static float[] midNormal;
 	private static float[] mid;
@@ -63,7 +63,7 @@ public class Analyser {
 					continue;
 				// cowGrowth[i][j] = -3;
 				double score = analyse(i, j);
-				double newScore = score * 1.5 + dist;
+				double newScore = score * 2 + dist;
 				// System.out.println(i + "," + j + ": " + dist + " : " +
 				// score);
 				if (newScore > priorityqueue[MAX_PASTR_LOCS - 1][2])

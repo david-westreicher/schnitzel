@@ -1,4 +1,4 @@
-package team209;
+package seedingteam209;
 
 import team209.OptimizedPathing.PathType;
 import battlecode.common.GameActionException;
@@ -23,7 +23,6 @@ public class BroadCaster {
 	public static final int ATTACK_SUCCESSFULL = 65323;
 	public static final int NEW_ATTACK = 65324;
 	public static final int ATTACK_SWARM_ALIVE = 65322;
-	public static final int SOLDIER_ID = 65321;
 
 	// MAXINT: 2147483647
 	// **********00001111

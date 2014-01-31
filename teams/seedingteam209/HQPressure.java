@@ -1,4 +1,4 @@
-package team209;
+package seedingteam209;
 
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -28,20 +28,19 @@ public class HQPressure extends Player {
 	private OptimizedPathing p;
 	private double[][] bestNoisePos;
 	private int bestNoisePosIndex;
-	private States currentState = States.HOLD;
+	private States currentState;
 	private Team opponent;
 	private MapLocation meeting;
 	private boolean firstSpawn = true;
 	private MapLocation attackLoc;
 	private int attackIndex = 0;
-	private int preferredSpawnDirection;
 
 	public HQPressure(RobotController rc) throws GameActionException {
 		this.rc = rc;
 		this.opponent = rc.getTeam().opponent();
 		loc = rc.getLocation();
+		currentState = States.HOLD;
 		BroadCaster.broadCastState(rc, currentState);
-		calculatePreferredSpawnDirection();
 		tryToSpawn();
 		map = Analyser.senseMap(rc);
 		tryToSpawn();
@@ -56,11 +55,6 @@ public class HQPressure extends Player {
 		tryToSpawn();
 	}
 
-	private void calculatePreferredSpawnDirection() {
-		preferredSpawnDirection = Util.getDirectionIndex(loc.directionTo(
-				rc.senseEnemyHQLocation()).opposite());
-	}
-
 	@Override
 	public void run() throws GameActionException {
 		if (!Shooting.tryToShoot(rc, RobotType.HQ.attackRadiusMaxSquared)) {
@@ -69,18 +63,21 @@ public class HQPressure extends Player {
 				checkAttackSuccess();
 			switch (currentState) {
 			case HOLD:
-				if (rc.senseRobotCount() >= HOLD_SOLDIERCOUNT_THRESHOLD)
+				hold();
+				if (rc.senseRobotCount() > HOLD_SOLDIERCOUNT_THRESHOLD)
 					changeState(States.MEET);
 				break;
 			case MEET:
+				meet();
 				enemyPastrs = rc.sensePastrLocations(opponent);
-				if (enemyPastrs.length == 0 && rc.senseRobotCount() > 10)
+				if (enemyPastrs.length == 1)
 					changeState(States.MILK);
 				if (rc.senseRobotCount() > HOLD_SOLDIERCOUNT_THRESHOLD
-						&& attackLoc == null && enemyPastrs.length >= 1)
+						&& attackLoc == null && enemyPastrs.length > 1)
 					changeState(States.RAGE_MODE);
 				break;
 			case MILK:
+				milk();
 				int myPastrs = rc.sensePastrLocations(rc.getTeam()).length;
 				int pastrsBuildedOnRadio = rc
 						.readBroadcast(BroadCaster.PASTR_BUILDED);
@@ -91,7 +88,7 @@ public class HQPressure extends Player {
 						rc.broadcast(BroadCaster.PASTR_BUILDED, 0);
 					}
 				enemyPastrs = rc.sensePastrLocations(opponent);
-				if (attackLoc == null && enemyPastrs.length == 1)
+				if (attackLoc == null && enemyPastrs.length > 1)
 					changeState(States.RAGE_MODE);
 				break;
 			case RAGE_MODE:
@@ -99,7 +96,7 @@ public class HQPressure extends Player {
 				// enemyPastrs = rc.sensePastrLocations(opponent);
 				// if (enemyPastrs.length == 0)
 				// changeState(States.MEET);
-				changeState(States.MILK);
+				changeState(States.MEET);
 				break;
 			}
 			tryToSpawn();
@@ -137,6 +134,18 @@ public class HQPressure extends Player {
 			}
 			rc.broadcast(BroadCaster.ATTACK_SUCCESSFULL, 0);
 		}
+	}
+
+	private void rageMode() {
+
+	}
+
+	private void meet() {
+
+	}
+
+	private void milk() {
+
 	}
 
 	private void changeState(States s) throws GameActionException {
@@ -191,8 +200,8 @@ public class HQPressure extends Player {
 			if (pathToAttack != null && pathToAttack.length > 0) {
 				System.out.println("generateAttackPath " + from + ", to "
 						+ attackLoc);
-				// for (MapLocation loc : pathToAttack)
-				// System.out.println("generateAttackPath " + loc);
+				for (MapLocation loc : pathToAttack)
+					System.out.println("generateAttackPath " + loc);
 				BroadCaster.broadCast(rc, pathToAttack, PathType.ATTACK_PATH);
 				return true;
 			}
@@ -215,12 +224,13 @@ public class HQPressure extends Player {
 		return meeting;
 	}
 
+	private void hold() throws GameActionException {
+	}
+
 	private boolean tryToSpawn() throws GameActionException {
-		if (rc.senseRobotCount() < GameConstants.MAX_ROBOTS) {
-			for (int i = preferredSpawnDirection; i < preferredSpawnDirection + 8; i++) {
-				Direction d = Util.VALID_DIRECTIONS[i
-						% Util.VALID_DIRECTIONS.length];
-				if (rc.canMove(d) && rc.isActive()) {
+		if (rc.senseRobotCount() < GameConstants.MAX_ROBOTS)
+			for (Direction d : Util.VALID_DIRECTIONS) {
+				if (rc.isActive() && rc.canMove(d)) {
 					if (firstSpawn) {
 						BroadCaster.broadCast(rc, BroadCaster.SAUSAGE_HEAD,
 								loc.add(d));
@@ -230,7 +240,6 @@ public class HQPressure extends Player {
 					return true;
 				}
 			}
-		}
 		return false;
 	}
 }
