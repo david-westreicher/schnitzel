@@ -74,8 +74,6 @@ public class HQPressure extends Player {
 				break;
 			case MEET:
 				enemyPastrs = rc.sensePastrLocations(opponent);
-				if (enemyPastrs.length == 0 && rc.senseRobotCount() > 10)
-					changeState(States.MILK);
 				if (rc.senseRobotCount() > HOLD_SOLDIERCOUNT_THRESHOLD
 						&& attackLoc == null && enemyPastrs.length >= 1)
 					changeState(States.RAGE_MODE);
@@ -91,7 +89,7 @@ public class HQPressure extends Player {
 						rc.broadcast(BroadCaster.PASTR_BUILDED, 0);
 					}
 				enemyPastrs = rc.sensePastrLocations(opponent);
-				if (attackLoc == null && enemyPastrs.length == 1)
+				if (attackLoc == null && enemyPastrs.length >= 1)
 					changeState(States.RAGE_MODE);
 				break;
 			case RAGE_MODE:
