@@ -1,0 +1,19 @@
+battlecode
+
+   • dummy path to return to original path? | 3
+   • implement dinamic move on stuck
+   • DONE dont construct pastr - as old strategy | 1
+   • dont construct when enemies are on the near | 2
+   • construc new pastr on next bast locatino | 1
+   • BUG pastr was constructed on enemies past location | hold
+   • construct fabric after the last was destroy? betterno | passt
+   • micro concentrate on enemy pastr | 3
+   • destroy pastr before noise tower | 1
+   • enemies.length > swarm.length | 3
+      ◦ (enemies.length) * *enemy.atack > bot.live
+         ▸ then run away
+   • run enemy only eg. 10steps..
+   • FEATURE kamikase
+   • capitalism mode on big maps
+   • construct noise tower before farm
+   • when attacking enemy → max 20 steps
