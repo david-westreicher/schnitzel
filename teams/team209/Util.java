@@ -102,9 +102,9 @@ public class Util {
 		return loc1;
 	}
 
-	public static int[] divide(int[] add, int i) {
-		add[0] /= i;
-		add[1] /= i;
+	public static int[] mul(int[] add, double d) {
+		add[0] *= d;
+		add[1] *= d;
 		return add;
 	}
 

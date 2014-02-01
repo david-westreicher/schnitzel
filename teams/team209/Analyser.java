@@ -25,11 +25,13 @@ public class Analyser {
 	private static float[] midNormal;
 	private static float[] mid;
 	private static float amp[] = new float[2];
+	private static int[][] map;
 
 	public static double[][] findBestNoisePos(RobotController rc, int[][] map,
 			MapLocation hqloc) throws GameActionException {
 		Analyser.width = map.length;
 		Analyser.height = map[0].length;
+		Analyser.map = map;
 		priorityqueue = new double[MAX_PASTR_LOCS][3];
 		Analyser.hqLoc = hqloc;
 		cowGrowth = rc.senseCowGrowth();
@@ -170,8 +172,8 @@ public class Analyser {
 				localmap[i][j] = rc.senseTerrainTile(new MapLocation(i, j))
 						.ordinal() - 3;
 		MapLocation enemyHQ = rc.senseEnemyHQLocation();
-		for (int i = -2; i <= 2; i++) {
-			for (int j = -2; j <= 2; j++) {
+		for (int i = -3; i <= 3; i++) {
+			for (int j = -3; j <= 3; j++) {
 				int x = enemyHQ.x + i;
 				int y = enemyHQ.y + j;
 				if (x >= 0 && x < width && y >= 0 && y < height) {
@@ -183,4 +185,12 @@ public class Analyser {
 		return localmap;
 	}
 
+	public static MapLocation getRandomMeetingPoint() {
+		MapLocation rand = null;
+		while (rand == null || map[rand.x][rand.y] == -1
+				|| distanceToMidLine(rand.x, rand.y) <= 0)
+			rand = new MapLocation(Util.RAND.nextInt(width),
+					Util.RAND.nextInt(height));
+		return rand;
+	}
 }

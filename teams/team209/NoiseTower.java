@@ -1,7 +1,9 @@
 package team209;
 
+import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 import battlecode.common.TerrainTile;
@@ -70,6 +72,18 @@ public class NoiseTower extends Player {
 				currentDist = 0;
 			}
 		}
+		if (Clock.getRoundNum() % 5 == 0)
+			checkForSelfDestruct();
+	}
+
+	private void checkForSelfDestruct() throws GameActionException {
+		Robot[] enemies = rc.senseNearbyGameObjects(Robot.class,
+				RobotType.NOISETOWER.sensorRadiusSquared, rc.getTeam()
+						.opponent());
+		Robot[] friends = rc.senseNearbyGameObjects(Robot.class,
+				RobotType.NOISETOWER.sensorRadiusSquared, rc.getTeam());
+		if (friends.length == 0 && enemies.length > 1)
+			rc.selfDestruct();
 	}
 
 	private void updateCenter() {

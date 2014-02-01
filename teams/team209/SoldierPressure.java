@@ -15,6 +15,7 @@ public class SoldierPressure extends Player {
 			3, 5 };
 	private static final int MIN_DISTANCE = 2;
 	private static final double RETREAT_HEALTH_THRESHOLD = 50;
+	private static final int MAX_RAGEMODE_TIME = 500;
 	private RobotController rc;
 	private MapLocation hq;
 	private States currentState;
@@ -29,6 +30,7 @@ public class SoldierPressure extends Player {
 	private int niceMoveRIGHT[] = new int[] { 0, 1, 7, 2, 6, 3, 5, 4 };
 	private int niceMoveLEFT[] = new int[] { 0, 7, 1, 6, 2, 5, 3, 4 };
 	private Micro m;
+	private int timeInRageMode;
 
 	public SoldierPressure(RobotController rc) throws GameActionException {
 		this.rc = rc;
@@ -73,6 +75,8 @@ public class SoldierPressure extends Player {
 				changeState(HQPressure.States.RAGE_MODE);
 			break;
 		case RAGE_MODE:
+			if (timeInRageMode++ > MAX_RAGEMODE_TIME)
+				changeState(HQPressure.States.MILK);
 			checkForNewAttack();
 			moveAlongPath();
 			break;
@@ -86,6 +90,7 @@ public class SoldierPressure extends Player {
 		rc.setIndicatorString(2, "no new pathType");
 		if (newAttack[0] != attackIndex)
 			return;
+		timeInRageMode = 0;
 		attackIndex++;
 		team209.HQPressure.PathType pathType = HQPressure.PathType.values()[newAttack[1]];
 		rc.setIndicatorString(2, "pathType: " + pathType + ", attackIndex: "
@@ -125,7 +130,8 @@ public class SoldierPressure extends Player {
 				getNextLoc();
 			}
 			rc.setIndicatorString(2, "pathing to: " + nextLoc + ", ["
-					+ currentLocIndex + "/" + currentPath.length + "]");
+					+ currentLocIndex + "/" + currentPath.length + "], "
+					+ timeInRageMode);
 			boolean reachedMeeting = false;
 			if (currentLocIndex == currentPath.length
 					&& (currentState == States.MEET || currentState == States.MILK)
@@ -160,8 +166,9 @@ public class SoldierPressure extends Player {
 		case MEET:
 			return construct(RobotType.NOISETOWER);
 		case RAGE_MODE:
-			if (rc.readBroadcast(BroadCaster.ATTACK_SUCCESSFULL) == 0)
+			if (rc.readBroadcast(BroadCaster.ATTACK_SUCCESSFULL) == 0) {
 				rc.broadcast(BroadCaster.ATTACK_SUCCESSFULL, 1);
+			}
 			break;
 		}
 		return false;
@@ -189,8 +196,9 @@ public class SoldierPressure extends Player {
 			getNextLoc();
 			break;
 		case MEET:
-			// meet->milk
+			// meet->ATTACK
 			if (newState == States.RAGE_MODE) {
+				timeInRageMode = 0;
 				MapLocation[] newAttackPath = BroadCaster.readPath(rc,
 						HQPressure.PathType.ATTACK_PATH);
 				currentPath = Util.mergePaths(currentPath, newAttackPath);
@@ -198,6 +206,7 @@ public class SoldierPressure extends Player {
 			break;
 		case MILK:
 			// MILK->ATTACK
+			timeInRageMode = 0;
 			MapLocation[] newAttackPath = BroadCaster.readPath(rc,
 					HQPressure.PathType.ATTACK_PATH);
 			currentPath = Util.mergePaths(currentPath, newAttackPath);

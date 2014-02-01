@@ -82,6 +82,7 @@ public class Micro {
 			hold();
 		} else if (!outnumbering()) {
 			retreat();
+			// kamikaze();
 		} else if (isSafe()) {
 			MapLocation friendToHelp = canHelpFriend();
 			if (friendToHelp != null) {
@@ -94,6 +95,24 @@ public class Micro {
 		}
 		if (id == 0 && Clock.getRoundNum() % 100 == 0)
 			Util.tock("run");
+	}
+
+	private void kamikaze() throws GameActionException {
+		double minDistance = 100000;
+		RobotInfo minDistRobot = null;
+		for (int i = 0; i < enemyRobotsCount; i++) {
+			RobotInfo ri = enemyRobots[i];
+			int dist = ri.location.distanceSquaredTo(loc);
+			if (dist < minDistance) {
+				minDistance = dist;
+				minDistRobot = ri;
+			}
+		}
+		if (minDistRobot != null)
+			if (minDistance <= 2)
+				rc.selfDestruct();
+			else
+				tryToMove(directionTo(loc, minDistRobot.location), true);
 	}
 
 	private boolean attackBuilding() throws GameActionException {
@@ -111,7 +130,7 @@ public class Micro {
 	private void attack() throws GameActionException {
 		rc.setIndicatorString(1, "attack");
 		RobotInfo ri = enemyRobots[0];
-		tryToMove(loc.directionTo(ri.location), true, 5);
+		tryToMove(directionTo(loc, ri.location), true, 5);
 	}
 
 	private boolean outnumbering() {
@@ -126,15 +145,54 @@ public class Micro {
 	private void hold() throws GameActionException {
 		rc.setIndicatorString(1, "hold");
 		if (loc.distanceSquaredTo(enemyHq) <= HQ_ATTACK_DISTANCE) {
-			tryToMove(enemyHq.directionTo(loc), true, 5);
+			tryToMove(directionTo(enemyHq, loc), true, 5);
 		} else
-			tryToMove(loc.directionTo(toLoc), false, 3);
+			tryToMove(directionTo(loc, toLoc), false, 8);
+	}
+
+	private Direction directionTo(MapLocation loc1, MapLocation loc2) {
+		int diffX = signum(loc2.x - loc1.x);
+		int diffY = signum(loc2.y - loc1.y);
+		switch (diffX) {
+		case 1:
+			switch (diffY) {
+			case -1:
+				return Direction.NORTH_EAST;
+			case 0:
+				return Direction.EAST;
+			case 1:
+				return Direction.SOUTH_EAST;
+			}
+		case 0:
+			switch (diffY) {
+			case -1:
+				return Direction.NORTH;
+			case 0:
+				return Direction.NONE;
+			case 1:
+				return Direction.SOUTH;
+			}
+		case -1:
+			switch (diffY) {
+			case -1:
+				return Direction.NORTH_WEST;
+			case 0:
+				return Direction.WEST;
+			case 1:
+				return Direction.SOUTH_WEST;
+			}
+		}
+		return Direction.NONE;
+	}
+
+	private int signum(int i) {
+		return i > 0 ? 1 : (i == 0 ? 0 : -1);
 	}
 
 	private void helpFriend(MapLocation friendToHelp)
 			throws GameActionException {
 		rc.setIndicatorString(1, "helpFriend " + friendToHelp);
-		tryToMove(loc.directionTo(friendToHelp), true);
+		tryToMove(directionTo(loc, friendToHelp), true);
 	}
 
 	private MapLocation canHelpFriend() {
@@ -148,8 +206,9 @@ public class Micro {
 
 	private void retreat() throws GameActionException {
 		rc.setIndicatorString(1, "retreat");
-		Direction dir = enemyRobots[0].location.directionTo(loc);
-		tryToMove(dir, true, 5);
+		Direction dir = directionTo(loc, toLoc);// directionTo(enemyRobots[0].location,
+												// loc);
+		tryToMove(dir, false, 8);
 	}
 
 	private void shoot() throws GameActionException {
@@ -237,11 +296,15 @@ public class Micro {
 
 	private boolean tryToMove(Direction dir, boolean attack, int howDirect)
 			throws GameActionException {
+		if (dir == Direction.NONE)
+			return false;
 		int index = Util.getDirectionIndex(dir);
+		// rc.setIndicatorString(0, "tryToMove " + dir + ", " + index + ", " +
+		// loc
+		// + ", " + toLoc);
 		for (int i = 0; i < howDirect; i++) {
 			dir = validDirs[(index + niceMove[i]) % validDirs.length];
-			if (!attack
-					&& loc.add(dir).distanceSquaredTo(enemyHq) <= HQ_ATTACK_DISTANCE)
+			if (loc.add(dir).distanceSquaredTo(enemyHq) <= RobotType.HQ.attackRadiusMaxSquared)
 				continue;
 			if (!attack)
 				if (isEnemyInRange(loc.add(dir)))
