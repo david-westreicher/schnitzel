@@ -26,14 +26,16 @@ public class Analyser {
 	private static float[] mid;
 	private static float amp[] = new float[2];
 	private static int[][] map;
+	private static MapLocation enemyHQ;
 
 	public static double[][] findBestNoisePos(RobotController rc, int[][] map,
-			MapLocation hqloc) throws GameActionException {
+			MapLocation hqloc, MapLocation enemyHQ) throws GameActionException {
 		Analyser.width = map.length;
 		Analyser.height = map[0].length;
 		Analyser.map = map;
 		priorityqueue = new double[MAX_PASTR_LOCS][3];
 		Analyser.hqLoc = hqloc;
+		Analyser.enemyHQ = enemyHQ;
 		cowGrowth = rc.senseCowGrowth();
 		calculateMidNormal();
 		// remove voids (walls) from cowgrowth
@@ -53,7 +55,7 @@ public class Analyser {
 		}
 
 		// possNoisePos sort= 182078 bc
-		Util.tick();
+		// Util.tick();
 		// int maxDist = (int) (Math.max(width, height) / 2.2);
 		int noiseReachHalf = NOISE_REACH / 2;
 		for (int i = 0; i < width; i += noiseReachHalf) {
@@ -72,7 +74,7 @@ public class Analyser {
 					insert(new double[] { i, j, newScore });
 			}
 		}
-		Util.tock("possNoisePos sort");
+		// Util.tock("possNoisePos sort");
 		// printPriorityQueue();
 		// Util.printMap(cowGrowth);
 		// System.out.println("analyzed map");
@@ -80,7 +82,8 @@ public class Analyser {
 	}
 
 	private static void calculateMidNormal() {
-		mid = new float[] { width / 2, height / 2 };
+		mid = new float[] { (hqLoc.x + enemyHQ.x) / 2.0f,
+				(hqLoc.y + enemyHQ.y) / 2.0f };
 		float normal[] = new float[] { hqLoc.x - mid[0], hqLoc.y - mid[1] };
 		float length = (float) Math.sqrt(normal[0] * normal[0] + normal[1]
 				* normal[1]);

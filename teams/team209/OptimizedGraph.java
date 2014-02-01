@@ -169,19 +169,19 @@ public class OptimizedGraph {
 	public static void init(int[][] map) {
 		width = map.length;
 		height = map[0].length;
-		Util.tick();
+		// Util.tick();
 		// makeRects from map= 73308 bc for castles
 		// makeRects from map= 59704 bc
 		// makeRects from map= 54629 bc (ignore roads)
 		int[] rects = makeRects(map);
-		Util.tock("makeRects from map");
-		Util.tick();
+		// Util.tock("makeRects from map");
+		// Util.tick();
 		// makeEdges from map= 24516 bc for castles
 		// makeEdges from map= 22150 bc
 		// makeEdges from map= 20822 bc
 		// makeEdges from map= 10920 bc (ignore roads)
 		makeEdges(rects, map);
-		Util.tock("makeEdges from map");
+		// Util.tock("makeEdges from map");
 		// Util.printMap(map);
 		// Util.printEdges(edges,numberOfRecs);
 	}

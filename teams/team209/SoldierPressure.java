@@ -31,6 +31,7 @@ public class SoldierPressure extends Player {
 	private int niceMoveLEFT[] = new int[] { 0, 7, 1, 6, 2, 5, 3, 4 };
 	private Micro m;
 	private int timeInRageMode;
+	private static final int soldierSensorRadius = RobotType.SOLDIER.sensorRadiusSquared;
 
 	public SoldierPressure(RobotController rc) throws GameActionException {
 		this.rc = rc;
@@ -51,8 +52,8 @@ public class SoldierPressure extends Player {
 				rc.broadcast(BroadCaster.ATTACK_SWARM_ALIVE, 1);
 		// try to shoot
 		States hqState = BroadCaster.readState(rc);
-		rc.setIndicatorString(0, "hqState: " + hqState + ", state: "
-				+ currentState);
+		// rc.setIndicatorString(0, "hqState: " + hqState + ", state: "
+		// + currentState);
 		switch (currentState) {
 		case HOLD:
 			hold();
@@ -87,16 +88,16 @@ public class SoldierPressure extends Player {
 	private void checkForNewAttack() throws GameActionException {
 		int[] newAttack = BroadCaster.fromInt2(rc
 				.readBroadcast(BroadCaster.NEW_ATTACK));
-		rc.setIndicatorString(2, "no new pathType");
+		// rc.setIndicatorString(2, "no new pathType");
 		if (newAttack[0] != attackIndex)
 			return;
 		timeInRageMode = 0;
 		attackIndex++;
 		team209.HQPressure.PathType pathType = HQPressure.PathType.values()[newAttack[1]];
-		rc.setIndicatorString(2, "pathType: " + pathType + ", attackIndex: "
-				+ attackIndex);
-		System.out.println("new attack " + pathType + ", " + newAttack[0]
-				+ ", " + attackIndex);
+		// rc.setIndicatorString(2, "pathType: " + pathType + ", attackIndex: "
+		// + attackIndex);
+		// System.out.println("new attack " + pathType + ", " + newAttack[0]
+		// + ", " + attackIndex);
 		switch (pathType) {
 		case ATTACK_PATH:
 			MapLocation[] newAttackPath = BroadCaster.readPath(rc,
@@ -129,20 +130,16 @@ public class SoldierPressure extends Player {
 				}
 				getNextLoc();
 			}
-			rc.setIndicatorString(2, "pathing to: " + nextLoc + ", ["
-					+ currentLocIndex + "/" + currentPath.length + "], "
-					+ timeInRageMode);
+			// rc.setIndicatorString(2, "pathing to: " + nextLoc + ", ["
+			// + currentLocIndex + "/" + currentPath.length + "], "
+			// + timeInRageMode);
 			boolean reachedMeeting = false;
 			if (currentLocIndex == currentPath.length
 					&& (currentState == States.MEET || currentState == States.MILK)
 					&& dist < 4) {
 				reachedMeeting = true;
 			}
-			if (reachedMeeting) {
-				if (Clock.getRoundNum() % 5 == 0)
-					m.move(rc, nextLoc, true);
-			} else
-				m.move(rc, nextLoc, false);
+			m.move(rc, nextLoc, reachedMeeting);
 		}
 	}
 
@@ -175,10 +172,9 @@ public class SoldierPressure extends Player {
 	}
 
 	private boolean construct(RobotType type) throws GameActionException {
-		if (rc.senseNearbyGameObjects(Robot.class,
-				RobotType.SOLDIER.sensorRadiusSquared, rc.getTeam().opponent()).length < rc
-				.senseNearbyGameObjects(Robot.class,
-						RobotType.SOLDIER.sensorRadiusSquared, rc.getTeam()).length)
+		if (rc.senseNearbyGameObjects(Robot.class, soldierSensorRadius, rc
+				.getTeam().opponent()).length < rc.senseNearbyGameObjects(
+				Robot.class, soldierSensorRadius, rc.getTeam()).length)
 			if (!rc.isConstructing() && rc.isActive()) {
 				rc.construct(type);
 				return true;

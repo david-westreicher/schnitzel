@@ -30,11 +30,16 @@ public class Micro {
 	private RobotInfo[] buildings;
 	private int buildingsCount;
 	private boolean sneak;
+	private boolean potentialHQWrongMove;
+	private boolean stuck;
 	private static final int HQ_ATTACK_DISTANCE = 25;
 	private static final Direction validDirs[] = new Direction[] {
 			Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
 			Direction.SOUTH_EAST, Direction.SOUTH, Direction.SOUTH_WEST,
 			Direction.WEST, Direction.NORTH_WEST };
+	private static final int soldierSensorRadius = RobotType.SOLDIER.sensorRadiusSquared;
+	private static final int soldierAttackRadius = RobotType.SOLDIER.attackRadiusMaxSquared;
+	private static final int hqAttackRadius = RobotType.HQ.attackRadiusMaxSquared;
 
 	public Micro(RobotController rc) throws GameActionException {
 		this.rc = rc;
@@ -48,7 +53,7 @@ public class Micro {
 
 	private void initLocalMap() {
 		int size = 1;
-		while (size * size < RobotType.SOLDIER.attackRadiusMaxSquared)
+		while (size * size < soldierAttackRadius)
 			size++;
 		size *= 2;
 		size++;
@@ -58,7 +63,7 @@ public class Micro {
 			for (int j = 0; j < size; j++) {
 				int diffX = i - attackSquareMid;
 				int diffY = j - attackSquareMid;
-				if (diffX * diffX + diffY * diffY <= RobotType.SOLDIER.attackRadiusMaxSquared) {
+				if (diffX * diffX + diffY * diffY <= soldierAttackRadius) {
 					attackSquare[i][j] = 1;
 				}
 			}
@@ -70,16 +75,12 @@ public class Micro {
 	}
 
 	private void run() throws GameActionException {
-		if (id == 0 && Clock.getRoundNum() % 100 == 0)
-			Util.tick();
 		loc = rc.getLocation();
+		potentialHQWrongMove = loc.distanceSquaredTo(enemyHq) <= HQ_ATTACK_DISTANCE;
 		senseRobots();
 		if (enemyRobotsCount == 0) {
-			if (buildingsCount > 0) {
-				if (attackBuilding())
-					return;
-			}
-			hold();
+			if (!attackBuilding())
+				hold();
 		} else if (!outnumbering()) {
 			retreat();
 			// kamikaze();
@@ -88,13 +89,13 @@ public class Micro {
 			if (friendToHelp != null) {
 				helpFriend(friendToHelp);
 			} else {
-				attack();
+				if (!attackBuilding())
+					attack();
 			}
 		} else {
-			shoot();
+			if (!attackBuilding())
+				shoot();
 		}
-		if (id == 0 && Clock.getRoundNum() % 100 == 0)
-			Util.tock("run");
 	}
 
 	private void kamikaze() throws GameActionException {
@@ -112,23 +113,32 @@ public class Micro {
 			if (minDistance <= 2)
 				rc.selfDestruct();
 			else
-				tryToMove(directionTo(loc, minDistRobot.location), true);
+				tryToMove(directionTo(loc, minDistRobot.location), true, 5);
 	}
 
 	private boolean attackBuilding() throws GameActionException {
+		if (buildingsCount == 0)
+			return false;
+		// rc.setIndicatorString(1, "attackBuilding");
 		for (int i = 0; i < buildingsCount; i++) {
-			if (buildings[i].location.distanceSquaredTo(loc) <= RobotType.SOLDIER.attackRadiusMaxSquared) {
-				if (rc.isActive()) {
+			if (buildings[i].type == RobotType.PASTR)
+				if (buildings[i].location.distanceSquaredTo(loc) <= soldierAttackRadius) {
 					rc.attackSquare(buildings[i].location);
 					return true;
 				}
-			}
 		}
+		/*
+		 * for (int i = 0; i < buildingsCount; i++) { if (buildings[i].type ==
+		 * RobotType.NOISETOWER) if
+		 * (buildings[i].location.distanceSquaredTo(loc) <= soldierAttackRadius)
+		 * { if (rc.isActive()) { rc.attackSquare(buildings[i].location); return
+		 * true; } } }
+		 */
 		return false;
 	}
 
 	private void attack() throws GameActionException {
-		rc.setIndicatorString(1, "attack");
+		// rc.setIndicatorString(1, "attack");
 		RobotInfo ri = enemyRobots[0];
 		tryToMove(directionTo(loc, ri.location), true, 5);
 	}
@@ -143,7 +153,7 @@ public class Micro {
 	}
 
 	private void hold() throws GameActionException {
-		rc.setIndicatorString(1, "hold");
+		// rc.setIndicatorString(1, "hold");
 		if (loc.distanceSquaredTo(enemyHq) <= HQ_ATTACK_DISTANCE) {
 			tryToMove(directionTo(enemyHq, loc), true, 5);
 		} else
@@ -191,8 +201,9 @@ public class Micro {
 
 	private void helpFriend(MapLocation friendToHelp)
 			throws GameActionException {
-		rc.setIndicatorString(1, "helpFriend " + friendToHelp);
-		tryToMove(directionTo(loc, friendToHelp), true);
+		// rc.setIndicatorString(1, "helpFriend " + friendToHelp);
+		// TODO was set to 5
+		tryToMove(directionTo(loc, friendToHelp), true, 8);
 	}
 
 	private MapLocation canHelpFriend() {
@@ -205,21 +216,22 @@ public class Micro {
 	}
 
 	private void retreat() throws GameActionException {
-		rc.setIndicatorString(1, "retreat");
+		// rc.setIndicatorString(1, "retreat");
 		Direction dir = directionTo(loc, toLoc);// directionTo(enemyRobots[0].location,
 												// loc);
-		tryToMove(dir, false, 8);
+		if (!tryToMove(dir, false, 8)) {
+			tryToMove(directionTo(enemyRobots[0].location, loc), true, 5);
+		}
 	}
 
 	private void shoot() throws GameActionException {
-		rc.setIndicatorString(1, "shoot");
 		double minHP = 100000;
 		double minID = 10000000;
 		RobotInfo minHpRobot = null;
 		for (int i = 0; i < enemyRobotsCount; i++) {
 			RobotInfo ri = enemyRobots[i];
 			if (ri.health <= minHP)
-				if (ri.location.distanceSquaredTo(loc) <= RobotType.SOLDIER.attackRadiusMaxSquared) {
+				if (ri.location.distanceSquaredTo(loc) <= soldierAttackRadius) {
 					if (ri.health < minHP
 							|| (ri.health == minHP && ri.robot.getID() < minID)) {
 						minHP = ri.health;
@@ -230,7 +242,9 @@ public class Micro {
 					}
 				}
 		}
-		if (minHpRobot != null && rc.isActive())
+		// rc.setIndicatorString(1,
+		// "shoot " + minHpRobot + ", " + Clock.getRoundNum());
+		if (minHpRobot != null)
 			rc.attackSquare(minHpRobot.location);
 	}
 
@@ -243,7 +257,7 @@ public class Micro {
 			return false;
 		for (int i = 0; i < enemyRobotsCount; i++) {
 			RobotInfo enemy = enemyRobots[i];
-			if (enemy.location.distanceSquaredTo(loc) <= RobotType.SOLDIER.attackRadiusMaxSquared)
+			if (enemy.location.distanceSquaredTo(loc) <= soldierAttackRadius)
 				return true;
 		}
 		return false;
@@ -251,7 +265,7 @@ public class Micro {
 
 	private void senseRobots() throws GameActionException {
 		Robot[] gos = rc.senseNearbyGameObjects(Robot.class,
-				RobotType.SOLDIER.sensorRadiusSquared);
+				soldierSensorRadius);
 		enemyRobots = new RobotInfo[gos.length];
 		friendlyRobots = new RobotInfo[gos.length];
 		buildings = new RobotInfo[gos.length];
@@ -267,8 +281,8 @@ public class Micro {
 				if (ri.type == RobotType.SOLDIER) {
 					enemyRobots[enemyIndex++] = ri;
 					enemyHealth += ri.health;
-				} else if (ri.type == RobotType.NOISETOWER
-						|| ri.type == RobotType.PASTR) {
+				} else if (// ri.type == RobotType.NOISETOWER ||
+				ri.type == RobotType.PASTR) {
 					buildings[buildingIndex++] = ri;
 				}
 			}
@@ -289,27 +303,29 @@ public class Micro {
 		// rc.setIndicatorString(0, enemyIndex + "");
 	}
 
-	private boolean tryToMove(Direction dir, boolean attack)
-			throws GameActionException {
-		return tryToMove(dir, attack, 5);
-	}
-
 	private boolean tryToMove(Direction dir, boolean attack, int howDirect)
 			throws GameActionException {
+		if (sneak && Clock.getRoundNum() % 5 != 0)
+			return true;
 		if (dir == Direction.NONE)
-			return false;
+			return true;
 		int index = Util.getDirectionIndex(dir);
+		if (stuck)
+			return tryToMoveCircular(index, attack);
 		// rc.setIndicatorString(0, "tryToMove " + dir + ", " + index + ", " +
 		// loc
 		// + ", " + toLoc);
+
 		for (int i = 0; i < howDirect; i++) {
 			dir = validDirs[(index + niceMove[i]) % validDirs.length];
-			if (loc.add(dir).distanceSquaredTo(enemyHq) <= RobotType.HQ.attackRadiusMaxSquared)
+			MapLocation newLoc = loc.add(dir);
+			if (potentialHQWrongMove
+					&& newLoc.distanceSquaredTo(enemyHq) <= hqAttackRadius)
 				continue;
-			if (!attack)
-				if (isEnemyInRange(loc.add(dir)))
-					continue;
-			if (rc.canMove(dir) && rc.isActive()) {
+			if (!attack && isEnemyInRange(newLoc))
+				continue;
+
+			if (rc.canMove(dir)) {
 				if (sneak)
 					rc.sneak(dir);
 				else
@@ -320,11 +336,16 @@ public class Micro {
 		return false;
 	}
 
+	private boolean tryToMoveCircular(int index, boolean attack) {
+		return false;
+	}
+
 	public void move(RobotController rc, MapLocation toLoc, boolean sneak)
 			throws GameActionException {
 		this.rc = rc;
 		this.toLoc = toLoc;
 		this.sneak = sneak;
-		run();
+		if (rc.isActive())
+			run();
 	}
 }
