@@ -9,24 +9,33 @@ public class RobotPlayer {
 
 	public static void run(RobotController rc) {
 		Util.init(rc);
-		try {
-			if (rc.getType() == RobotType.HQ) {
+		if (rc.getType() == RobotType.HQ) {
+			try {
 				p = new HQPressure(rc);
-			} else if (rc.getType() == RobotType.SOLDIER) {
-				p = new SoldierPressure(rc);
-			} else if (rc.getType() == RobotType.NOISETOWER) {
-				p = new NoiseTower(rc);
+			} catch (GameActionException e) {
+				e.printStackTrace();
 			}
-			if (p != null)
-				while (true) {
-					p.run();
-					rc.yield();
-				}
-			else
-				while (true)
-					rc.yield();
-		} catch (GameActionException e) {
-			e.printStackTrace();
+		} else if (rc.getType() == RobotType.SOLDIER) {
+			try {
+				p = new SoldierPressure(rc);
+			} catch (GameActionException e) {
+				e.printStackTrace();
+			}
+		} else if (rc.getType() == RobotType.NOISETOWER) {
+			p = new NoiseTower(rc);
 		}
+		if (p != null)
+			while (true) {
+				try {
+					p.run();
+				} catch (GameActionException e) {
+					e.printStackTrace();
+				}
+				rc.yield();
+			}
+		else
+			while (true)
+				rc.yield();
+
 	}
 }

@@ -32,6 +32,9 @@ public class Micro {
 	private boolean sneak;
 	private boolean potentialHQWrongMove;
 	private boolean stuck;
+	private MapLocation lastToLoc;
+	private int stuckTimer;
+	private int randomDir = (int) Math.random() ;
 	private static final int HQ_ATTACK_DISTANCE = 25;
 	private static final Direction validDirs[] = new Direction[] {
 			Direction.NORTH, Direction.NORTH_EAST, Direction.EAST,
@@ -75,7 +78,6 @@ public class Micro {
 	}
 
 	private void run() throws GameActionException {
-		loc = rc.getLocation();
 		potentialHQWrongMove = loc.distanceSquaredTo(enemyHq) <= HQ_ATTACK_DISTANCE;
 		senseRobots();
 		if (enemyRobotsCount == 0) {
@@ -336,16 +338,53 @@ public class Micro {
 		return false;
 	}
 
-	private boolean tryToMoveCircular(int index, boolean attack) {
+	private boolean tryToMoveCircular(int index, boolean attack)
+			throws GameActionException {
+		index += 8;
+		int right = ((((Clock.getRoundNum() / 50 + randomDir)) % 2 == 0) ? -1
+				: 1);
+		for (int i = 0; i < 8; i++) {
+			Direction dir = validDirs[(index + i * right) % validDirs.length];
+			MapLocation newLoc = loc.add(dir);
+			if (potentialHQWrongMove
+					&& newLoc.distanceSquaredTo(enemyHq) <= hqAttackRadius)
+				continue;
+			if (!attack && isEnemyInRange(newLoc))
+				continue;
+
+			if (rc.canMove(dir)) {
+				if (sneak)
+					rc.sneak(dir);
+				else
+					rc.move(dir);
+				return true;
+			}
+		}
 		return false;
 	}
 
 	public void move(RobotController rc, MapLocation toLoc, boolean sneak)
 			throws GameActionException {
 		this.rc = rc;
+		this.lastToLoc = this.toLoc;
 		this.toLoc = toLoc;
+		if (lastToLoc != null)
+			checkForStuck();
+		loc = rc.getLocation();
 		this.sneak = sneak;
 		if (rc.isActive())
 			run();
+	}
+
+	private void checkForStuck() {
+		if (lastToLoc.x == toLoc.x && lastToLoc.y == toLoc.y) {
+			stuckTimer++;
+			if (stuckTimer > 50) {
+				stuckTimer = 0;
+				randomDir = Util.RAND.nextInt();
+				stuck = !stuck;
+			}
+		} else
+			stuck = false;
 	}
 }
